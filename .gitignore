@@ -1,3 +1,5 @@
 /tesla
 /tesla.*
 /perf.cvs
+/*.lib
+/*.dll
