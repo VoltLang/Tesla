@@ -389,19 +389,20 @@ public:
 
 			foreach (i, type; f.ft.argTypes) {
 				llvmType := toLLVMFromValueType(type);
-				auto v = LLVMBuildAlloca(builder, llvmType, null);
-				LLVMBuildStore(builder, v, LLVMGetParam(f.llvmFunc, cast(u32)i));
+				ptr := LLVMBuildAlloca(builder, llvmType, null);
+				v := LLVMGetParam(f.llvmFunc, cast(u32)i);
+				LLVMBuildStore(builder, v, ptr);
 				currentLocalTypes[pos] = type;
-				currentLocals[pos++] = v;
+				currentLocals[pos++] = ptr;
 			}
 
 			foreach (i, c; counts) {
 				type := types[i];
 				llvmType := toLLVMFromValueType(type);
 				foreach (k; 0 .. c) {
-					auto v = LLVMBuildAlloca(builder, llvmType, null);
+					ptr := LLVMBuildAlloca(builder, llvmType, null);
 					currentLocalTypes[pos] = type;
-					currentLocals[pos++] = v;
+					currentLocals[pos++] = ptr;
 				}
 			}
 		}
@@ -583,12 +584,12 @@ public:
 			break;
 		case SetLocal:
 			v := valueStack.pop(type);
-			LLVMBuildStore(builder, ptr, v);
+			LLVMBuildStore(builder, v, ptr);
 			break;
 		case TeeLocal:
 			// Don't pop the value.
 			v := valueStack.checkTop(type);
-			LLVMBuildStore(builder, ptr, v);
+			LLVMBuildStore(builder, v, ptr);
 			break;
 		default:
 			unhandledOp(op, "var");
