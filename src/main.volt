@@ -7,25 +7,12 @@ import io = watt.io;
 import wasm = wasm;
 
 import tesla.polyfill;
-
+import tesla.driver;
 
 fn main(args: string[]) i32
 {
-	if (args.length == 1) {
-		io.writefln("usage: %s <file>", args[0]);
-		return 1;
-	}
-
-	data := cast(const(u8)[])read(args[1]);
-	if (false) {
-		t := new wasm.Dumper();
-		wasm.readFile(t, data);
-	} else {
-		p := new Polyfill();
-		wasm.readFile(p, data);
-		io.writefln("%s", p.printToString());
-		p.close();
-	}
-
-	return 0;
+	drv := new DefaultDriver(args);
+	ret := drv.run();
+	drv.close();
+	return ret;
 }
