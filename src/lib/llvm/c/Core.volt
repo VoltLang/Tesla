@@ -176,6 +176,10 @@ fn LLVMX86FP80TypeInContext(LLVMContextRef) LLVMTypeRef;
 fn LLVMFP128TypeInContext(LLVMContextRef) LLVMTypeRef;
 fn LLVMPPCFP128TypeInContext(LLVMContextRef) LLVMTypeRef;
 fn LLVMFunctionType(LLVMTypeRef, LLVMTypeRef*, u32, LLVMBool) LLVMTypeRef;
+fn LLVMPointerType(LLVMTypeRef, u32) LLVMTypeRef;
+fn LLVMGetPointerAddressSpace(LLVMTypeRef) u32;
+fn LLVMVectorType(LLVMTypeRef, u32) LLVMTypeRef;
+u32 LLVMGetVectorSize(LLVMTypeRef);
 
 // Const
 fn LLVMConstInt(LLVMTypeRef, u64, LLVMBool) LLVMValueRef;
@@ -208,8 +212,6 @@ fn LLVMBuildRet(LLVMBuilderRef, LLVMValueRef) LLVMValueRef;
 fn LLVMBuildAlloca(LLVMBuilderRef, LLVMTypeRef, const(char)*) LLVMValueRef;
 fn LLVMBuildLoad(LLVMBuilderRef, LLVMValueRef, const(char)*) LLVMValueRef;
 fn LLVMBuildStore(LLVMBuilderRef, LLVMValueRef, LLVMValueRef) LLVMValueRef;
-fn LLVMBuildTruncOrBitCast(LLVMBuilderRef, LLVMValueRef,
-                           LLVMTypeRef, const(char)*) LLVMValueRef;
 fn LLVMBuildBinOp(LLVMBuilderRef, LLVMOpcode,
                   LLVMValueRef, LLVMValueRef, const(char)*) LLVMValueRef;
 fn LLVMBuildICmp(LLVMBuilderRef, LLVMIntPredicate,
@@ -223,3 +225,23 @@ fn LLVMBuildCondBr(LLVMBuilderRef, LLVMValueRef,
 fn LLVMBuildPhi(LLVMBuilderRef, LLVMTypeRef, const(char)*) LLVMValueRef;
 fn LLVMBuildSelect(LLVMBuilderRef, LLVMValueRef,
                    LLVMValueRef, LLVMValueRef, const(char)*) LLVMValueRef;
+fn LLVMBuildTrunc(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildZExt(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildSExt(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildFPToUI(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildFPToSI(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildUIToFP(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildSIToFP(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildFPTrunc(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildFPExt(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildPtrToInt(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildIntToPtr(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildBitCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildAddrSpaceCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildZExtOrBitCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildSExtOrBitCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildTruncOrBitCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildCast(LLVMBuilderRef, LLVMOpcode, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildPointerCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildIntCast(LLVMBuilderRef, LLVMValueRef, /*Signed cast!*/ LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMBuildFPCast(LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, const(char)*) LLVMValueRef;
