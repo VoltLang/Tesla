@@ -181,7 +181,9 @@ public:
 		}
 
 		switch (id) with (wasm.Section) {
+		case Element: return wasm.SkipOrParse.Skip;
 		case Code: codeSection = data; return wasm.SkipOrParse.Skip;
+		case Data: return wasm.SkipOrParse.Skip;
 		default: return wasm.SkipOrParse.Parse;
 		}
 	}
@@ -347,7 +349,9 @@ public:
 	{
 		io.output.writefln("%s", printToString());
 		io.output.flush();
-		str := format("read error: '%s'", err);
+		str := format("Error: %s", err);
+		io.error.writefln("%s", str);
+		io.error.flush();
 		throw new Exception(str);
 	}
 
@@ -564,7 +568,13 @@ public:
 
 		ensureBlock(op);
 
-		unhandledOp(op, "memory");
+		switch (op) with (wasm.Opcode) {
+		case I32Load: buildLoad(wasm.Type.I32, offset); break;
+		case I64Load: buildLoad(wasm.Type.I64, offset); break;
+		case I32Store: buildStore(wasm.Type.I32, typeI32, offset); break;
+		case I64Store: buildStore(wasm.Type.I64, typeI64, offset); break;
+		default: unhandledOp(op, "memory");
+		}
 	}
 
 	override fn onOpVar(op: wasm.Opcode, index: u32)
@@ -625,6 +635,39 @@ public:
 		l := valueStack.pop(t);
 		v := LLVMBuildBinOp(builder, op, l, r, "");
 		valueStack.push(t, v);
+	}
+
+	fn buildLoad(t: wasm.Type, offset: u32)
+	{
+		baseType := toLLVMFromValueType(t);
+		ptrType := LLVMPointerType(baseType, 0);
+
+		ptr := valueStack.pop(wasm.Type.I32);
+		if (offset != 0) {
+			ptr = LLVMBuildBinOp(builder, LLVMOpcode.Add,
+				LLVMConstInt(typeI32, offset, false), ptr, "");
+		}
+		ptr = LLVMBuildBitCast(builder, ptr, ptrType, "");
+
+		v := LLVMBuildLoad(builder, ptr, "");
+
+		valueStack.push(t, v);
+	}
+
+	fn buildStore(t: wasm.Type, baseType: LLVMTypeRef, offset: u32)
+	{
+		ptrType := LLVMPointerType(baseType, 0);
+
+		v := valueStack.pop(t);
+		ptr := valueStack.pop(wasm.Type.I32);
+		if (offset != 0) {
+			ptr = LLVMBuildBinOp(builder, LLVMOpcode.Add,
+				LLVMConstInt(typeI32, offset, false), ptr, "");
+		}
+		v = LLVMBuildBitCast(builder, v, baseType, "");
+		ptr = LLVMBuildBitCast(builder, ptr, ptrType, "");
+
+		LLVMBuildStore(builder, v, ptr);
 	}
 
 
