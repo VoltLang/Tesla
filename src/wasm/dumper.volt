@@ -84,7 +84,7 @@ class Dumper : Reader
 	override fn onFunctionBody(num: u32, types: Type[], counts: u32[])
 	{
 		if (types.length != counts.length) {
-			onError("missmatching local vars length");
+			onReadError("missmatching local vars length");
 		}
 
 		foreach (i; 0 .. counts.length) {
@@ -140,7 +140,7 @@ class Dumper : Reader
 		io.writefln("    i32.const %s", v);
 	}
 
-	override fn onError(err: string)
+	override fn onReadError(err: string)
 	{
 		io.output.flush();
 		io.error.writefln("Error: '%s'", err);

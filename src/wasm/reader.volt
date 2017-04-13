@@ -54,7 +54,7 @@ abstract class Reader
 	abstract fn onOpVar(op: Opcode, index: u32);
 	abstract fn onOpI32Const(v: i32);
 
-	abstract fn onError(err: string);
+	abstract fn onReadError(err: string);
 	abstract fn onEOF();
 }
 
@@ -65,7 +65,7 @@ fn readFile(r: Reader, data: const(u8)[])
 	headerSize := cast(u32)typeid(Header).size;
 
 	if (data.length < headerSize) {
-		r.onError("invalid header");
+		r.onReadError("invalid header");
 		return;
 	}
 
@@ -78,15 +78,15 @@ fn readFile(r: Reader, data: const(u8)[])
 		payload_len: u32;
 
 		if (data.readV(out id)) {
-			return r.onError("failed to read section id");
+			return r.onReadError("failed to read section id");
 		}
 
 		if (data.readV(out payload_len)) {
-			return r.onError("failed to read payload_len");
+			return r.onReadError("failed to read payload_len");
 		}
 
 		if (payload_len > data.length) {
-			return r.onError("section size larger then file.");
+			return r.onReadError("section size larger then file.");
 		}
 
 		s := data[0 .. payload_len];
@@ -119,7 +119,7 @@ fn readCustomSection(r: Reader, data: const(u8)[])
 {
 	name: string;
 	if (data.readV(out name)) {
-		r.onError("failed to read custom section");
+		r.onReadError("failed to read custom section");
 	}
 
 	r.onCustomSection(name, data);
@@ -130,7 +130,7 @@ fn readTypeSection(r: Reader, data: const(u8)[])
 	count: u32;
 	num: u32;
 	if (data.readV(out count)) {
-		r.onError("failed to read type section");
+		r.onReadError("failed to read type section");
 	}
 	r.onTypeSection(count);
 
@@ -151,21 +151,21 @@ fn readTypeEntry(r: Reader, num: u32, ref data: const(u8)[])
 	if (data.readV(out from) ||
 	    data.readV(out param_count) ||
 	    param_count > 32) {
-		return r.onError("failed to read type entry");
+		return r.onReadError("failed to read type entry");
 	}
 
 	foreach (ref t; param_types[0 .. param_count]) {
 		if (data.readV(out t)) {
-			return r.onError("failed to read param_type");
+			return r.onReadError("failed to read param_type");
 		}
 	}
 
 	if (data.readV(out return_count) || return_count > 1) {
-		return r.onError("failed to read return_count");
+		return r.onReadError("failed to read return_count");
 	}
 
 	if (return_count == 1 && data.readV(out return_type)) {
-		return r.onError("failed to read return_type");
+		return r.onReadError("failed to read return_type");
 	}
 
 	r.onTypeEntry(num, from, new param_types[0 .. param_count], return_type);
@@ -176,7 +176,7 @@ fn readImportSection(r: Reader, data: const(u8)[])
 	num: u32;
 	count: u32;
 	if (data.readV(out count)) {
-		r.onError("failed to read import section");
+		r.onReadError("failed to read import section");
 	}
 	r.onImportSection(count);
 
@@ -194,7 +194,7 @@ fn readImportEntry(r: Reader, num: u32, ref data: const(u8)[])
 	if (data.readV(out mod) ||
 	    data.readV(out field) ||
 	    data.readF(out external_kind)) {
-		return r.onError("failed to read import entry");
+		return r.onReadError("failed to read import entry");
 	}
 
 	switch (external_kind) with (ExternalKind)  {
@@ -202,19 +202,19 @@ fn readImportEntry(r: Reader, num: u32, ref data: const(u8)[])
 		type: i8;
 		mut: u32;
 		if (data.readV(out type) || data.readV(out mut)) {
-			return r.onError("failed to read import entry");
+			return r.onReadError("failed to read import entry");
 		}
 		r.onImportGlobal(num, mod, field, type, cast(bool)mut);
 		break;
 	case Function:
 		index: u32;
 		if (data.readV(out index)) {
-			return r.onError("failed to read import entry");
+			return r.onReadError("failed to read import entry");
 		}
 		r.onImportFunc(num, mod, field, index);
 		break;
 	default:
-		r.onError("unhandled import entry");
+		r.onReadError("unhandled import entry");
 	}
 }
 
@@ -223,14 +223,14 @@ fn readFunctionSection(r: Reader, data: const(u8)[])
 	num: u32;
 	count: u32;
 	if (data.readV(out count)) {
-		r.onError("failed to read function section");
+		r.onReadError("failed to read function section");
 	}
 	r.onFunctionSection(count);
 
 	while (count-- > 0) {
 		index: u32;
 		if (data.readV(out index)) {
-			r.onError("failed to read function entry");
+			r.onReadError("failed to read function entry");
 		}
 		r.onFunctionEntry(num++, index);
 	}
@@ -244,13 +244,13 @@ fn readTableSection(r: Reader, data: const(u8)[])
 	l: Limits;
 
 	if (data.readV(out count) || count > 1) {
-		return r.onError("failed to read table section");
+		return r.onReadError("failed to read table section");
 	}
 	r.onTableSection(count);
 
 	while (count-- > 0) {
 		if (data.readV(out elem_type) || data.readV(out l)) {
-			return r.onError("failed to read table section");
+			return r.onReadError("failed to read table section");
 		}
 		r.onTableEntry(num++, elem_type, l);
 	}
@@ -261,14 +261,14 @@ fn readMemorySection(r: Reader, data: const(u8)[])
 	num: u32;
 	count: u32;
 	if (data.readV(out count) || count > 1) {
-		return r.onError("failed to read memory section");
+		return r.onReadError("failed to read memory section");
 	}
 	r.onMemorySection(count);
 
 	while (count-- > 0) {
 		l: Limits;
 		if (data.readV(out l)) {
-			return r.onError("failed to read memory entry");
+			return r.onReadError("failed to read memory entry");
 		}
 		r.onMemoryEntry(num++, l);
 	}
@@ -276,7 +276,7 @@ fn readMemorySection(r: Reader, data: const(u8)[])
 
 fn readGlobalSection(r: Reader, data: const(u8)[])
 {
-	r.onError("global section");
+	r.onReadError("global section");
 }
 
 fn readExportSection(r: Reader, data: const(u8)[])
@@ -284,7 +284,7 @@ fn readExportSection(r: Reader, data: const(u8)[])
 	num: u32;
 	count: u32;
 	if (data.readV(out count)) {
-		return r.onError("failed to read export section");
+		return r.onReadError("failed to read export section");
 	}
 	r.onExportSection(count);
 
@@ -295,7 +295,7 @@ fn readExportSection(r: Reader, data: const(u8)[])
 		if (data.readV(out name) ||
 		    data.readV(out kind) ||
 		    data.readV(out index)) {
-			return r.onError("failed to read export entry");
+			return r.onReadError("failed to read export entry");
 		}
 		r.onExportEntry(num++, name, kind, index);
 	}
@@ -305,19 +305,19 @@ fn readStartSection(r: Reader, data: const(u8)[])
 {
 	index: u32;
 	if (data.readV(out index)) {
-		return r.onError("failed to read start section");
+		return r.onReadError("failed to read start section");
 	}
 	r.onStart(index);
 }
 
 fn readElementSection(r: Reader, data: const(u8)[])
 {
-	r.onError("element section");
+	r.onReadError("element section");
 }
 
 fn readDataSection(r: Reader, data: const(u8)[])
 {
-	r.onError("data section");
+	r.onReadError("data section");
 }
 
 fn readCodeSection(r: Reader, data: const(u8)[])
@@ -325,7 +325,7 @@ fn readCodeSection(r: Reader, data: const(u8)[])
 	num: u32;
 	count: u32;
 	if (data.readV(out count)) {
-		return r.onError("failed to read code section");
+		return r.onReadError("failed to read code section");
 	}
 	r.onCodeSection(count);
 	r.onCode(data);
@@ -345,7 +345,7 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	if (data.readV(out body_size) ||
 	    body_size > data.length ||
 	    data[body_size-1] != Opcode.End) {
-		return r.onError("failed to read function body");
+		return r.onReadError("failed to read function body");
 	}
 
 	// Only read from the body.
@@ -354,13 +354,13 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 
 	if (b.readV(out local_count) ||
 	    local_count > 4 /* 4 types */) {
-		return r.onError("failed to read function locals");
+		return r.onReadError("failed to read function locals");
 	}
 
 	foreach (i; 0 .. local_count) {
 		if (b.readV(out local_counts[i]) ||
 		    b.readV(out local_types[i])) {
-			return r.onError("failed to read function locals");
+			return r.onReadError("failed to read function locals");
 		}
 	}
 
@@ -370,16 +370,16 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	while (b.length > 1) {
 		op: Opcode;
 		if (b.readF(out op)) {
-			return r.onError("failed to read opcode");
+			return r.onReadError("failed to read opcode");
 		}
 
 		final switch (op.opKind()) with (OpcodeKind) {
 		case Error:
 			str := format("invalid opcode value '0x%02x'", op);
-			return r.onError(str);
+			return r.onReadError(str);
 		case Unhandled, CallIndirect:
 			str := format("unhandled opcode '%s'", op.opToString());
-			return r.onError(str);
+			return r.onReadError(str);
 		case Regular:
 			r.onOp(op);
 			break;
@@ -389,45 +389,45 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 		case ControlType:
 			t: Type;
 			if (b.readV(out t)) {
-				return r.onError("failed to read control type opcode");
+				return r.onReadError("failed to read control type opcode");
 			}
 			r.onControl(op, t);
 			break;
 		case Branch:
 			relative_depth: u32;
 			if (b.readV(out relative_depth)) {
-				return r.onError("failed to read branch opcode");
+				return r.onReadError("failed to read branch opcode");
 			}
 			r.onBranch(op, relative_depth);
 			break;
 		case BranchTable:
 			str := format("unhandled branch opcode '%s'", op.opToString());
-			return r.onError(str);
+			return r.onReadError(str);
 		case Call:
 			i: u32;
 			if (b.readV(out i)) {
-				return r.onError("failed to read call opcode");
+				return r.onReadError("failed to read call opcode");
 			}
 			r.onCall(i);
 			break;
 		case Memory:
 			flags, offset: u32;
 			if (b.readV(out flags) || b.readV(out offset)) {
-				return r.onError("failed to read memory opcode");
+				return r.onReadError("failed to read memory opcode");
 			}
 			r.onOpMemory(op, flags, offset);
 			break;
 		case VarAccess:
 			i: u32;
 			if (b.readV(out i)) {
-				return r.onError("failed to read var opcode");
+				return r.onReadError("failed to read var opcode");
 			}
 			r.onOpVar(op, i);
 			break;
 		case I32Const:
 			i: i32;
 			if (b.readV(out i)) {
-				return r.onError("failed to read i32.const opcode");
+				return r.onReadError("failed to read i32.const opcode");
 			}
 			r.onOpI32Const(i);
 			break;
@@ -435,7 +435,7 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	}
 
 	if (b.length != 1 || b[0] != Opcode.End) {
-		return r.onError("function body not correctly terminated");
+		return r.onReadError("function body not correctly terminated");
 	}
 
 	r.onFunctionBodyEnd(num);

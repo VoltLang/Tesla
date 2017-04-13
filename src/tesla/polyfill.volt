@@ -345,7 +345,12 @@ public:
 	 *
 	 */
 
-	override fn onError(err: string)
+	override fn onReadError(err: string)
+	{
+		onError(format("read error \"%s\"", err));
+	}
+
+	fn onError(err: string)
 	{
 		io.output.writefln("%s", printToString());
 		io.output.flush();
