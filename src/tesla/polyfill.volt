@@ -76,6 +76,8 @@ public:
 	startIndex: u32;
 	typeVoid: LLVMTypeRef;
 	typeI1: LLVMTypeRef;
+	typeI8: LLVMTypeRef;
+	typeI16: LLVMTypeRef;
 	typeI32: LLVMTypeRef;
 	typeI64: LLVMTypeRef;
 	typeF32: LLVMTypeRef;
@@ -101,6 +103,8 @@ public:
 		this.builder = LLVMCreateBuilderInContext(this.ctx);
 		this.typeVoid = LLVMVoidTypeInContext(this.ctx);
 		this.typeI1 = LLVMInt1TypeInContext(this.ctx);
+		this.typeI8 = LLVMInt8TypeInContext(this.ctx);
+		this.typeI16 = LLVMInt16TypeInContext(this.ctx);
 		this.typeI32 = LLVMInt32TypeInContext(this.ctx);
 		this.typeI64 = LLVMInt64TypeInContext(this.ctx);
 		this.typeF32 = LLVMFloatTypeInContext(this.ctx);
@@ -121,6 +125,8 @@ public:
 	{
 		this.typeVoid = null;
 		this.typeI1 = null;
+		this.typeI8 = null;
+		this.typeI16 = null;
 		this.typeI32 = null;
 		this.typeI64 = null;
 		this.typeF32 = null;
@@ -556,6 +562,7 @@ public:
 		switch (op) with (wasm.Opcode) {
 		case Drop: valueStack.pop(); break;
 		case I32LtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SLT); break;
+		case I32GeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGE); break;
 		case I32Add: buildBinOp(wasm.Type.I32, LLVMOpcode.Add); break;
 		case I32Sub: buildBinOp(wasm.Type.I32, LLVMOpcode.Sub); break;
 		case I32Mul: buildBinOp(wasm.Type.I32, LLVMOpcode.Mul); break;
@@ -574,8 +581,18 @@ public:
 		ensureBlock(op);
 
 		switch (op) with (wasm.Opcode) {
-		case I32Load: buildLoad(wasm.Type.I32, offset); break;
-		case I64Load: buildLoad(wasm.Type.I64, offset); break;
+		case I32Load8U:  buildLoad(wasm.Type.I32,  typeI8, false, offset); break;
+		case I32Load8S:  buildLoad(wasm.Type.I32,  typeI8,  true, offset); break;
+		case I32Load16U: buildLoad(wasm.Type.I32, typeI16, false, offset); break;
+		case I32Load16S: buildLoad(wasm.Type.I32, typeI16,  true, offset); break;
+		case I32Load:    buildLoad(wasm.Type.I32, typeI32, false, offset); break;
+		case I64Load8U:  buildLoad(wasm.Type.I64,  typeI8, false, offset); break;
+		case I64Load8S:  buildLoad(wasm.Type.I64,  typeI8,  true, offset); break;
+		case I64Load16U: buildLoad(wasm.Type.I64, typeI16, false, offset); break;
+		case I64Load16S: buildLoad(wasm.Type.I64, typeI16,  true, offset); break;
+		case I64Load32U: buildLoad(wasm.Type.I64, typeI32, false, offset); break;
+		case I64Load32S: buildLoad(wasm.Type.I64, typeI32,  true, offset); break;
+		case I64Load:    buildLoad(wasm.Type.I64, typeI64, false, offset); break;
 		case I32Store: buildStore(wasm.Type.I32, typeI32, offset); break;
 		case I64Store: buildStore(wasm.Type.I64, typeI64, offset); break;
 		default: unhandledOp(op, "memory");
@@ -642,10 +659,10 @@ public:
 		valueStack.push(t, v);
 	}
 
-	fn buildLoad(t: wasm.Type, offset: u32)
+	fn buildLoad(t: wasm.Type, srcBaseType: LLVMTypeRef, signed: bool, offset: u32)
 	{
-		baseType := toLLVMFromValueType(t);
-		ptrType := LLVMPointerType(baseType, 0);
+		toType := toLLVMFromValueType(t);
+		ptrType := LLVMPointerType(srcBaseType, 0);
 
 		ptr := valueStack.pop(wasm.Type.I32);
 		if (offset != 0) {
@@ -655,6 +672,12 @@ public:
 		ptr = LLVMBuildBitCast(builder, ptr, ptrType, "");
 
 		v := LLVMBuildLoad(builder, ptr, "");
+
+		if (signed) {
+			v = LLVMBuildSExtOrBitCast(builder, v, toType, "");
+		} else {
+			v = LLVMBuildZExtOrBitCast(builder, v, toType, "");
+		}
 
 		valueStack.push(t, v);
 	}
