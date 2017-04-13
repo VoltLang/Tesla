@@ -50,6 +50,7 @@ abstract class Reader
 	abstract fn onControl(op: Opcode, t: Type);
 	abstract fn onBranch(op: Opcode, relative_depth: u32);
 	abstract fn onCall(index: u32);
+	abstract fn onCallIndirect(typeIndex: u32);
 	abstract fn onOpMemory(op: Opcode, flags: u32, offset: u32);
 	abstract fn onOpVar(op: Opcode, index: u32);
 	abstract fn onOpI32Const(v: i32);
@@ -377,7 +378,7 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 		case Error:
 			str := format("invalid opcode value '0x%02x'", op);
 			return r.onReadError(str);
-		case Unhandled, CallIndirect:
+		case Unhandled:
 			str := format("unhandled opcode '%s'", op.opToString());
 			return r.onReadError(str);
 		case Regular:
@@ -409,6 +410,14 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 				return r.onReadError("failed to read call opcode");
 			}
 			r.onCall(i);
+			break;
+		case CallIndirect:
+			typeIndex: u32;
+			res: u32;
+			if (b.readV(out typeIndex) || b.readV(out res) || res != 0) {
+				return r.onReadError("failed to read call_indirect opcode");
+			}
+			r.onCallIndirect(typeIndex);
 			break;
 		case Memory:
 			flags, offset: u32;

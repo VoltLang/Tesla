@@ -553,6 +553,16 @@ public:
 		}
 	}
 
+	override fn onCallIndirect(typeIndex: u32)
+	{
+		ensureValidFuncTypeIndex(typeIndex, "call_indirect");
+
+		ft := funcTypes[typeIndex];
+		if (ft.hasRet) {
+			onOpI32Const(0);
+		}
+	}
+
 	override fn onOp(op: wasm.Opcode)
 	{
 		//io.writefln("%s", wasm.opToString(op));

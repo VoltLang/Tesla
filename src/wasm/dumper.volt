@@ -120,6 +120,11 @@ class Dumper : Reader
 		io.writefln("    call %s", index);
 	}
 
+	override fn onCallIndirect(typeIndex: u32)
+	{
+		io.writefln("    call %s", typeIndex);
+	}
+
 	override fn onOpMemory(op: Opcode, flags: u32, offset: u32)
 	{
 		io.writef("    %s flags=%s", opToString(op), flags);
