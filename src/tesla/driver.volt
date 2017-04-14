@@ -20,6 +20,7 @@ private:
 	mInputFile: string;
 	mOutputFile: string;
 	mOutputStdio: bool;
+	mDump: bool;
 
 	mPoly: Polyfill;
 
@@ -58,6 +59,13 @@ public:
 		}
 
 		data := cast(const(u8)[])read(mInputFile); 
+
+		if (mDump) {
+			d := new wasm.Dumper();
+			wasm.readFile(d, data);
+			return 0;
+		}
+
 		mPoly := new Polyfill();
 		wasm.readFile(mPoly, data); 
 
@@ -123,6 +131,7 @@ fn processArg(drv: DefaultDriver, state: State, arg: string) State
 	case None:
 		switch (arg) {
 		case "-o": return State.Output;
+		case "-dump", "--dump": drv.mDump = true; return State.None;
 		default:
 		}
 
