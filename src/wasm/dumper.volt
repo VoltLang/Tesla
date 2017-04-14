@@ -145,6 +145,21 @@ class Dumper : Reader
 		io.writefln("    i32.const %s", v);
 	}
 
+	override fn onOpI64Const(v: i64)
+	{
+		io.writefln("    i64.const %s", v);
+	}
+
+	override fn onOpF32Const(v: f32)
+	{
+		io.writefln("    f32.const %s", v);
+	}
+
+	override fn onOpF64Const(v: f64)
+	{
+		io.writefln("    f64.const %s", v);
+	}
+
 	override fn onReadError(err: string)
 	{
 		io.output.flush();

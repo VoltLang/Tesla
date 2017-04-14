@@ -54,6 +54,9 @@ abstract class Reader
 	abstract fn onOpMemory(op: Opcode, flags: u32, offset: u32);
 	abstract fn onOpVar(op: Opcode, index: u32);
 	abstract fn onOpI32Const(v: i32);
+	abstract fn onOpI64Const(v: i64);
+	abstract fn onOpF32Const(v: f32);
+	abstract fn onOpF64Const(v: f64);
 
 	abstract fn onReadError(err: string);
 	abstract fn onEOF();
@@ -440,6 +443,27 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 			}
 			r.onOpI32Const(i);
 			break;
+		case I64Const:
+			i: i64;
+			if (b.readV(out i)) {
+				return r.onReadError("failed to read i64.const opcode");
+			}
+			r.onOpI64Const(i);
+			break;
+		case F32Const:
+			f: f32;
+			if (b.readF(out f)) {
+				return r.onReadError("failed to read f32.const opcode");
+			}
+			r.onOpF32Const(f);
+			break;
+		case F64Const:
+			f: f64;
+			if (b.readF(out f)) {
+				return r.onReadError("failed to read f64.const opcode");
+			}
+			r.onOpF64Const(f);
+			break;
 		}
 	}
 
@@ -463,6 +487,9 @@ enum OpcodeKind
 	Memory,       // Memory access opcodes.
 	VarAccess,    // Get/set/tee local/global.
 	I32Const,     // Constants
+	I64Const,     // Constants
+	F32Const,     // Constants
+	F64Const,     // Constants
 	Unhandled,    // Lazy programmer.
 }
 
@@ -498,8 +525,12 @@ fn opKind(op: Opcode) OpcodeKind
 		return OpcodeKind.Unhandled;
 	case I32Const:
 		return OpcodeKind.I32Const;
-	case I64Const, F32Const, F64Const:
-		return OpcodeKind.Unhandled;
+	case I64Const:
+		return OpcodeKind.I64Const;
+	case F32Const:
+		return OpcodeKind.F32Const;
+	case F64Const:
+		return OpcodeKind.F64Const;
 	case I32Clz, I32Ctz, I32Popcnt, I32Add, I32Sub, I32Mul, I32DivS,
 	     I32DivU, I32RemS, I32RemU, I32And, I32Or, I32Xor, I32Shl, I32ShrS,
 	     I32ShrU, I32Rotl, I32Rotr, I64Clz, I64Ctz, I64Popcnt, I64Add,

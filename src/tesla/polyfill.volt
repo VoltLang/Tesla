@@ -442,6 +442,10 @@ public:
 		valueStack.push(wasm.Type.I32, llvmValue);
 	}
 
+	override fn onOpI64Const(v: i64) { onError("I64Const"); }
+	override fn onOpF32Const(v: f32) { onError("F32Const"); }
+	override fn onOpF64Const(v: f64) { onError("F64Const"); }
+
 	override fn onControl(op: wasm.Opcode, t: wasm.Type)
 	{
 		//io.writefln("%s", wasm.opToString(op));

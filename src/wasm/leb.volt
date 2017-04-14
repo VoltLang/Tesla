@@ -5,9 +5,9 @@ module util.leb;
 import wasm.structs;
 
 
-fn readULEB128(data: const(u8)[], out v: u32) i32
+fn readULEB128(data: const(u8)[], out v: u64) i32
 {
-	result: u32;
+	result: u64;
 	shift: u32;
 	i: i32;
 	b: u8;
@@ -18,7 +18,7 @@ fn readULEB128(data: const(u8)[], out v: u32) i32
 		}
 
 		b = data[i];
-		result |= cast(u32)(b & 0x7f) << shift;
+		result |= cast(u64)(b & 0x7f) << shift;
 		shift += 7;
 		i += 1;
 	} while (b & 0x80);
@@ -30,9 +30,9 @@ fn readULEB128(data: const(u8)[], out v: u32) i32
 	return i;
 }
 
-fn readSLEB128(data: const(u8)[], out v: i32) i32
+fn readSLEB128(data: const(u8)[], out v: i64) i32
 {
-	result: i32;
+	result: i64;
 	shift: i32;
 	i: i32;
 	b: u8;
@@ -43,13 +43,13 @@ fn readSLEB128(data: const(u8)[], out v: i32) i32
 		}
 
 		b = data[i];
-		result |= cast(i32)(b & 0x7f) << shift;
+		result |= cast(i64)(b & 0x7f) << shift;
 		shift += 7;
 		i += 1;
 	} while (b & 0x80);
 
-	if ((b & 0x40) != 0 && (shift < cast(i32)typeid(i32).size * 8)) {
-		result |= (cast(i32)-1 << shift);
+	if ((b & 0x40) != 0 && (shift < cast(i32)typeid(i64).size * 8)) {
+		result |= (cast(i64)-1 << shift);
 	}
 
 	v = result;
@@ -67,6 +67,26 @@ fn readF(ref data: const(u8)[], out v: u8) bool
 	return false;
 }
 
+fn readF(ref data: const(u8)[], out f: f32) bool
+{
+	if (data.length < 4) {
+		return true;
+	}
+	f = *cast(f32*)&data[0];
+	data = data[4 .. $];
+	return false;
+}
+
+fn readF(ref data: const(u8)[], out f: f64) bool
+{
+	if (data.length < 8) {
+		return true;
+	}
+	f = *cast(f64*)&data[0];
+	data = data[8 .. $];
+	return false;
+}
+
 fn readV(ref data: const(u8)[], out l: Limits) bool
 {
 	return data.readV(out l.flags) ||
@@ -76,7 +96,7 @@ fn readV(ref data: const(u8)[], out l: Limits) bool
 
 fn readV(ref data: const(u8)[], out v: u8) bool
 {
-	r: u32;
+	r: u64;
 	ret := data.readULEB128(out r);
 	if (ret < 0) {
 		return true;
@@ -88,7 +108,7 @@ fn readV(ref data: const(u8)[], out v: u8) bool
 
 fn readV(ref data: const(u8)[], out v: i8) bool
 {
-	r: i32;
+	r: i64;
 	ret := data.readSLEB128(out r);
 	if (ret < 0) {
 		return true;
@@ -100,6 +120,30 @@ fn readV(ref data: const(u8)[], out v: i8) bool
 
 fn readV(ref data: const(u8)[], out v: u32) bool
 {
+	r: u64;
+	ret := data.readULEB128(out r);
+	if (ret < 0) {
+		return true;
+	}
+	v = cast(u32)r;
+	data = data[ret .. $];
+	return false;
+}
+
+fn readV(ref data: const(u8)[], out v: i32) bool
+{
+	r: i64;
+	ret := data.readSLEB128(out r);
+	if (ret < 0) {
+		return true;
+	}
+	v = cast(i32)r;
+	data = data[ret .. $];
+	return false;
+}
+
+fn readV(ref data: const(u8)[], out v: u64) bool
+{
 	ret := data.readULEB128(out v);
 	if (ret < 0) {
 		return true;
@@ -108,7 +152,7 @@ fn readV(ref data: const(u8)[], out v: u32) bool
 	return false;
 }
 
-fn readV(ref data: const(u8)[], out v: i32) bool
+fn readV(ref data: const(u8)[], out v: i64) bool
 {
 	ret := data.readSLEB128(out v);
 	if (ret < 0) {
@@ -120,13 +164,13 @@ fn readV(ref data: const(u8)[], out v: i32) bool
 
 fn readV(ref data: const(u8)[], out v: const(char)[]) bool
 {
-	len: u32;
+	len: u64;
 	ret := data.readULEB128(out len);
 	if (ret < 0) {
 		return true;
 	}
 
-	end := cast(u32)ret + len;
+	end := cast(u32)ret + cast(u32)len;
 	if (end > data.length) {
 		return true;
 	}
