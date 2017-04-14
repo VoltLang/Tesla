@@ -343,8 +343,8 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 {
 	body_size: u32;
 	local_count: u32;
-	local_types: Type[4];
-	local_counts: u32[4];
+	local_types: Type[16];
+	local_counts: u32[16];
 
 	if (data.readV(out body_size) ||
 	    body_size > data.length ||
@@ -356,12 +356,14 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	b := data[0 .. body_size];
 	data = data[body_size .. $];
 
-	if (b.readV(out local_count) ||
-	    local_count > 4 /* 4 types */) {
+	if (b.readV(out local_count)) {
 		return r.onReadError("failed to read function locals");
 	}
 
 	foreach (i; 0 .. local_count) {
+		if (i >= local_types.length) {
+			return r.onReadError("to many function locas");
+		}
 		if (b.readV(out local_counts[i]) ||
 		    b.readV(out local_types[i])) {
 			return r.onReadError("failed to read function locals");

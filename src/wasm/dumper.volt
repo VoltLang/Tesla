@@ -20,7 +20,10 @@ class Dumper : Reader
 
 	override fn onSection(id: Section, data: const(u8)[]) SkipOrParse
 	{
-		return SkipOrParse.Parse;
+		switch (id) with (Section) {
+		case Element, Data: return SkipOrParse.Skip;
+		default: return SkipOrParse.Parse;
+		}
 	}
 
 	override fn onTypeEntry(num: u32, from: Type, args: Type[], ret: Type)
