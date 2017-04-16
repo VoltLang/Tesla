@@ -356,11 +356,11 @@ public:
 		onError(format("read error \"%s\"", err));
 	}
 
-	fn onError(err: string)
+	fn onError(err: string, loc: string = __LOCATION__)
 	{
 		io.output.writefln("%s", printToString());
 		io.output.flush();
-		str := format("Error: %s", err);
+		str := format("%s: error: %s", loc, err);
 		io.error.writefln("%s", str);
 		io.error.flush();
 		throw new Exception(str);
@@ -719,99 +719,99 @@ public:
 	 *
 	 */
 
-	fn unhandledOp(op: wasm.Opcode, kind: string)
+	fn unhandledOp(op: wasm.Opcode, kind: string, loc: string = __LOCATION__)
 	{
 		str := format("unhandled %s opcode '%s'", kind, wasm.opToString(op));
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureNotImportFuncIndex(index: u32, kind: string)
+	fn ensureNotImportFuncIndex(index: u32, kind: string, loc: string = __LOCATION__)
 	{	
 		if (index >= numFuncImports) {
 			return;
 		}
 
 		str := format("can not reference import function in %s", kind);
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureValidFuncIndex(index: u32, kind: string)
+	fn ensureValidFuncIndex(index: u32, kind: string, loc: string = __LOCATION__)
 	{
 		if (index < funcs.length) {
 			return;
 		}
 
 		str := format("invalid function index for %s", kind);
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureValidFuncTypeIndex(index: u32, kind: string)
+	fn ensureValidFuncTypeIndex(index: u32, kind: string, loc: string = __LOCATION__)
 	{
 		if (index < funcTypes.length) {
 			return;
 		}
 
 		str := format("invalid function type index for %s", kind);
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureSectionOrder(id: wasm.Section)
+	fn ensureSectionOrder(id: wasm.Section, loc: string = __LOCATION__)
 	{
 		if (id > lastSection) {
 			return;
 		}
 		str := format("section '%s' can not come before section '%s'",
 			wasm.sectionToString(id), wasm.sectionToString(lastSection));
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureOneEntry(count: u32, section: string)
+	fn ensureOneEntry(count: u32, section: string, loc: string = __LOCATION__)
 	{
 		if (count == 1) {
 			return;
 		}
 
 		str := format("%s section may only have one entry", section);
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureTypeSection(section: string)
+	fn ensureTypeSection(section: string, loc: string = __LOCATION__)
 	{	
 		if (hasProccessedType) {
 			return;
 		}
 
 		str := format("%s section requires types section", section);
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureValidLocalIndex(index: u32)
+	fn ensureValidLocalIndex(index: u32, loc:string = __LOCATION__)
 	{
 		if (index < currentLocals.length) {
 			return;
 		}
 
-		onError("local index out of bounds");
+		onError("local index out of bounds", loc);
 	}
 
-	fn ensureBlock(op: wasm.Opcode)
+	fn ensureBlock(op: wasm.Opcode, loc:string = __LOCATION__)
 	{
 		if (currentBlock !is null) {
 			return;
 		}
 
 		str := format("opcode is unreachable '%s'", wasm.opToString(op));
-		onError(str);
+		onError(str, loc);
 	}
 
-	fn ensureTerminated(op: wasm.Opcode)
+	fn ensureTerminated(op: wasm.Opcode, loc:string = __LOCATION__)
 	{
 		if (currentBlock is null) {
 			return;
 		}
 
 		str := format("'%s' block does not have a terminating opcode", wasm.opToString(op));
-		onError(str);
+		onError(str, loc);
 	}
 
 
@@ -861,9 +861,9 @@ public:
 		mNum++;
 	}
 
-	fn pop(t: wasm.Type) T
+	fn pop(t: wasm.Type, loc: string = __LOCATION__) T
 	{
-		checkTypeAndPop(t);
+		checkTypeAndPop(t, loc);
 		v := mTs[mNum];
 		mTs[mNum] = T.init;
 		return v;
@@ -877,6 +877,14 @@ public:
 		return ret;
 	}
 
+	fn topType(loc: string = __LOCATION__) wasm.Type
+	{
+		if (mNum <= 0) {
+			poly.onError("stack under run", loc);
+		}
+		return mTypes[mNum-1];
+	}
+
 	fn getRelative(index: u32, out t: wasm.Type, out v: T)
 	{
 		index++;
@@ -887,37 +895,37 @@ public:
 		v = mTs[mNum-index];
 	}
 
-	fn checkTop(t: wasm.Type) T
+	fn checkTop(t: wasm.Type, loc: string = __LOCATION__) T
 	{
 		if (mNum < 1) {
-			poly.onError("stack under run");
+			poly.onError("stack under run", loc);
 		}
 		if (mTypes[mNum-1] != t) {
-			poly.onError("stack type missmatch");
+			poly.onError("stack type missmatch", loc);
 		}
 		return mTs[mNum-1];
 	}
 
-	fn checkPush()
+	fn checkPush(loc: string = __LOCATION__)
 	{
 		if (mNum >= Max) {
-			poly.onError("stack to large");
+			poly.onError("stack to large", loc);
 		}
 	}
 
-	fn checkAndPop()
+	fn checkAndPop(loc: string = __LOCATION__)
 	{
 		if (mNum == 0) {
-			poly.onError("stack under run");
+			poly.onError("stack under run", loc);
 		}	
 		mNum--;
 	}
 
-	fn checkTypeAndPop(t: wasm.Type)
+	fn checkTypeAndPop(t: wasm.Type, loc: string = __LOCATION__)
 	{
 		checkAndPop();
 		if (mTypes[mNum] != t) {
-			poly.onError("stack type missmatch");
+			poly.onError("stack type missmatch", loc);
 		}
 	}
 }
