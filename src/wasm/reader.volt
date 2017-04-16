@@ -498,7 +498,9 @@ enum OpcodeKind
 fn opKind(op: Opcode) OpcodeKind
 {
 	switch (op) with (Opcode) {
-	case Unreachable, Nop:
+	case Unreachable:
+		return OpcodeKind.Control;
+	case Nop:
 		return OpcodeKind.Regular;
 	case Block, Loop, If:
 		return OpcodeKind.ControlType;
