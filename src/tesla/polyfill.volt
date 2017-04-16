@@ -433,16 +433,20 @@ public:
 
 	override fn onOpI32Const(v: i32)
 	{
-		//io.writefln("%s", wasm.opToString(wasm.Opcode.I32Const));
-
 		ensureBlock(wasm.Opcode.I32Const);
 
-		llvmType := toLLVMFromValueType(wasm.Type.I32);
-		llvmValue := LLVMConstInt(llvmType, cast(u64)v, false);
+		llvmValue := LLVMConstInt(typeI32, cast(u64)v, false);
 		valueStack.push(wasm.Type.I32, llvmValue);
 	}
 
-	override fn onOpI64Const(v: i64) { onError("I64Const"); }
+	override fn onOpI64Const(v: i64)
+	{
+		ensureBlock(wasm.Opcode.I64Const);
+
+		llvmValue := LLVMConstInt(typeI64, cast(u64)v, false);
+		valueStack.push(wasm.Type.I64, llvmValue);
+	}
+
 	override fn onOpF32Const(v: f32) { onError("F32Const"); }
 	override fn onOpF64Const(v: f64) { onError("F64Const"); }
 
@@ -455,6 +459,8 @@ public:
 		}
 
 		switch (op) with (wasm.Opcode) {
+		case Unreachable:
+			break;
 		case Block:
 			ensureBlock(op);
 
@@ -562,6 +568,16 @@ public:
 		ensureValidFuncTypeIndex(typeIndex, "call_indirect");
 
 		ft := funcTypes[typeIndex];
+		args: LLVMValueRef[];
+
+		if (ft.argTypes.length > 0) {
+			args = new LLVMValueRef[](ft.argTypes.length);
+			c := args.length;
+			foreach (i, a; ft.argTypes) {
+				args[--c] = valueStack.pop(a);
+			}
+		}
+
 		if (ft.hasRet) {
 			onOpI32Const(0);
 		}
@@ -575,14 +591,66 @@ public:
 
 		switch (op) with (wasm.Opcode) {
 		case Drop: valueStack.pop(); break;
+		// 32-bit integer.
+		case I32Eq: buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ); break;
+		case I32Ne: buildCmp(wasm.Type.I32, LLVMIntPredicate.NE); break;
+		case I32LeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.ULE); break;
+		case I32LeS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SLE); break;
+		case I32LtU: buildCmp(wasm.Type.I32, LLVMIntPredicate.ULT); break;
 		case I32LtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SLT); break;
 		case I32GeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGE); break;
+		case I32GeS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGE); break;
+		case I32GtU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGT); break;
+		case I32GtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGT); break;
 		case I32Add: buildBinOp(wasm.Type.I32, LLVMOpcode.Add); break;
 		case I32Sub: buildBinOp(wasm.Type.I32, LLVMOpcode.Sub); break;
 		case I32Mul: buildBinOp(wasm.Type.I32, LLVMOpcode.Mul); break;
+		case I32DivU: buildBinOp(wasm.Type.I32, LLVMOpcode.UDiv); break;
+		case I32DivS: buildBinOp(wasm.Type.I32, LLVMOpcode.SDiv); break;
 		case I32And: buildBinOp(wasm.Type.I32, LLVMOpcode.And); break;
 		case I32Or: buildBinOp(wasm.Type.I32, LLVMOpcode.Or); break;
 		case I32Xor: buildBinOp(wasm.Type.I32, LLVMOpcode.Xor); break;
+		case I32Shl: buildBinOp(wasm.Type.I32, LLVMOpcode.Shl); break;
+		case I32ShrU: buildBinOp(wasm.Type.I32, LLVMOpcode.LShr); break;
+		case I32ShrS: buildBinOp(wasm.Type.I32, LLVMOpcode.AShr); break;
+		case I32Eqz:
+			valueStack.push(wasm.Type.I32, LLVMConstInt(typeI32, 0, false));
+			buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ);
+			break;
+		// 64-bit integer.
+		case I64Eq: buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ); break;
+		case I64Ne: buildCmp(wasm.Type.I64, LLVMIntPredicate.NE); break;
+		case I64LeU: buildCmp(wasm.Type.I64, LLVMIntPredicate.ULE); break;
+		case I64LeS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SLE); break;
+		case I64LtU: buildCmp(wasm.Type.I64, LLVMIntPredicate.ULT); break;
+		case I64LtS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SLT); break;
+		case I64GeU: buildCmp(wasm.Type.I64, LLVMIntPredicate.UGE); break;
+		case I64GeS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGE); break;
+		case I64GtU: buildCmp(wasm.Type.I64, LLVMIntPredicate.UGT); break;
+		case I64GtS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGT); break;
+		case I64Add: buildBinOp(wasm.Type.I64, LLVMOpcode.Add); break;
+		case I64Sub: buildBinOp(wasm.Type.I64, LLVMOpcode.Sub); break;
+		case I64Mul: buildBinOp(wasm.Type.I64, LLVMOpcode.Mul); break;
+		case I64DivU: buildBinOp(wasm.Type.I64, LLVMOpcode.UDiv); break;
+		case I64DivS: buildBinOp(wasm.Type.I64, LLVMOpcode.SDiv); break;
+		case I64And: buildBinOp(wasm.Type.I64, LLVMOpcode.And); break;
+		case I64Or: buildBinOp(wasm.Type.I64, LLVMOpcode.Or); break;
+		case I64Xor: buildBinOp(wasm.Type.I64, LLVMOpcode.Xor); break;
+		case I64Shl: buildBinOp(wasm.Type.I64, LLVMOpcode.Shl); break;
+		case I64ShrU: buildBinOp(wasm.Type.I64, LLVMOpcode.LShr); break;
+		case I64ShrS: buildBinOp(wasm.Type.I64, LLVMOpcode.AShr); break;
+		case I64Eqz:
+			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
+			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
+			break;
+		case Select:
+			c := valueStack.pop(wasm.Type.I32);
+			t := valueStack.topType();
+			l := valueStack.pop(t);
+			r := valueStack.pop(t);
+			v := LLVMBuildSelect(builder, c, l, r, "");
+			valueStack.push(t, v);
+			break;
 		default:
 			unhandledOp(op, "generic");
 		}
@@ -607,8 +675,10 @@ public:
 		case I64Load32U: buildLoad(wasm.Type.I64, typeI32, false, offset); break;
 		case I64Load32S: buildLoad(wasm.Type.I64, typeI32,  true, offset); break;
 		case I64Load:    buildLoad(wasm.Type.I64, typeI64, false, offset); break;
-		case I32Store: buildStore(wasm.Type.I32, typeI32, offset); break;
-		case I64Store: buildStore(wasm.Type.I64, typeI64, offset); break;
+		case I32Store8:  buildStore(wasm.Type.I32, typeI8, offset); break;
+		case I32Store16: buildStore(wasm.Type.I32, typeI16, offset); break;
+		case I32Store:   buildStore(wasm.Type.I32, typeI32, offset); break;
+		case I64Store:   buildStore(wasm.Type.I64, typeI64, offset); break;
 		default: unhandledOp(op, "memory");
 		}
 	}
@@ -662,7 +732,7 @@ public:
 		r := valueStack.pop(t);
 		l := valueStack.pop(t);
 		v := LLVMBuildICmp(builder, p, l, r, "");
-		valueStack.push(t, v);
+		valueStack.push(wasm.Type.I32, v);
 	}
 
 	fn buildBinOp(t: wasm.Type, op: LLVMOpcode)
