@@ -1,0 +1,15 @@
+{
+	"pattern": "test.volt",
+	"testCommandPrefix": "//T ",
+	"macros": {
+		"default": [
+			"//T requires:exceptions",
+			"//T run:tesla -o %t.bc %S/test.wasm",
+			"//T run:volta -o %t %s %t.bc",
+			"//T run:%t"
+		]
+	},
+	"requiresAliases": {
+		"exceptions": "!windows"
+	}
+}
