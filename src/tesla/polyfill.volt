@@ -93,6 +93,15 @@ public:
 	currentLocals: LLVMValueRef[];
 	currentLocalTypes: wasm.Type[];
 
+	fnTeslaI32DivU: LLVMValueRef;
+	fnTeslaI32DivS: LLVMValueRef;
+	fnTeslaI32RemU: LLVMValueRef;
+	fnTeslaI32RemS: LLVMValueRef;
+	fnTeslaI32Clz: LLVMValueRef;
+	fnTeslaI32Ctz: LLVMValueRef;
+	fnTeslaI32Rotl: LLVMValueRef;
+	fnTeslaI32Rotr: LLVMValueRef;
+	fnLLVM_ctpop_i32: LLVMValueRef;
 
 public:
 	this()
@@ -109,6 +118,8 @@ public:
 		this.typeI64 = LLVMInt64TypeInContext(this.ctx);
 		this.typeF32 = LLVMFloatTypeInContext(this.ctx);
 		this.typeF64 = LLVMDoubleTypeInContext(this.ctx);
+
+		makeInbuilt();
 	}
 
 	fn printToString() string
@@ -132,6 +143,11 @@ public:
 		this.typeF32 = null;
 		this.typeF64 = null;
 		this.funcTypes = null;
+		this.fnTeslaI32Clz = null;
+		this.fnTeslaI32Ctz = null;
+		this.fnTeslaI32Rotl = null;
+		this.fnTeslaI32Rotr = null;
+		this.fnLLVM_ctpop_i32 = null;
 		LLVMDisposeBuilder(this.builder);
 		LLVMDisposeModule(this.mod);
 		LLVMContextDispose(this.ctx);
@@ -146,6 +162,28 @@ public:
 	 * Helpers.
 	 *
 	 */
+
+	fn makeInbuilt()
+	{
+		binI32Args: LLVMTypeRef[2];
+		binI32Args[0] = typeI32;
+		binI32Args[1] = typeI32;
+		binI32 := LLVMFunctionType(typeI32, binI32Args, false);
+
+		unaryI32Args: LLVMTypeRef[1];
+		unaryI32Args[0] = typeI32;
+		unaryI32 := LLVMFunctionType(typeI32, unaryI32Args, false);
+
+		fnTeslaI32DivU = LLVMAddFunction(this.mod, "__tesla_op_i32_div_u", binI32);
+		fnTeslaI32DivS = LLVMAddFunction(this.mod, "__tesla_op_i32_div_s", binI32);
+		fnTeslaI32RemU = LLVMAddFunction(this.mod, "__tesla_op_i32_rem_u", binI32);
+		fnTeslaI32RemS = LLVMAddFunction(this.mod, "__tesla_op_i32_rem_s", binI32);
+		fnTeslaI32Clz = LLVMAddFunction(this.mod, "__tesla_op_i32_clz", unaryI32);
+		fnTeslaI32Ctz = LLVMAddFunction(this.mod, "__tesla_op_i32_ctz", unaryI32);
+		fnTeslaI32Rotl = LLVMAddFunction(this.mod, "__tesla_op_i32_rotl", binI32);
+		fnTeslaI32Rotr = LLVMAddFunction(this.mod, "__tesla_op_i32_rotr", binI32);
+		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
+	}
 
 	fn toLLVMFromValueType(t: wasm.Type) LLVMTypeRef
 	{
@@ -592,6 +630,24 @@ public:
 		switch (op) with (wasm.Opcode) {
 		case Drop: valueStack.pop(); break;
 		// 32-bit integer.
+		case I32Add: buildBinOp(wasm.Type.I32, LLVMOpcode.Add); break;
+		case I32Sub: buildBinOp(wasm.Type.I32, LLVMOpcode.Sub); break;
+		case I32Mul: buildBinOp(wasm.Type.I32, LLVMOpcode.Mul); break;
+		case I32DivU: buildBinCall(wasm.Type.I32, fnTeslaI32DivU); break;
+		case I32DivS: buildBinCall(wasm.Type.I32, fnTeslaI32DivS); break;
+		case I32RemU: buildBinCall(wasm.Type.I32, fnTeslaI32RemU); break;
+		case I32RemS: buildBinCall(wasm.Type.I32, fnTeslaI32RemS); break;
+		case I32And: buildBinOp(wasm.Type.I32, LLVMOpcode.And); break;
+		case I32Or: buildBinOp(wasm.Type.I32, LLVMOpcode.Or); break;
+		case I32Xor: buildBinOp(wasm.Type.I32, LLVMOpcode.Xor); break;
+		case I32Shl: buildBinOp(wasm.Type.I32, LLVMOpcode.Shl); break;
+		case I32ShrU: buildBinOp(wasm.Type.I32, LLVMOpcode.LShr); break;
+		case I32ShrS: buildBinOp(wasm.Type.I32, LLVMOpcode.AShr); break;
+		case I32Rotl: buildBinCall(wasm.Type.I32, fnTeslaI32Rotl); break;
+		case I32Rotr: buildBinCall(wasm.Type.I32, fnTeslaI32Rotr); break;
+		case I32Clz: buildUnaryCall(wasm.Type.I32, fnTeslaI32Clz); break;
+		case I32Ctz: buildUnaryCall(wasm.Type.I32, fnTeslaI32Ctz); break;
+		case I32Popcnt: buildUnaryCall(wasm.Type.I32, fnLLVM_ctpop_i32); break;
 		case I32Eq: buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ); break;
 		case I32Ne: buildCmp(wasm.Type.I32, LLVMIntPredicate.NE); break;
 		case I32LeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.ULE); break;
@@ -602,17 +658,6 @@ public:
 		case I32GeS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGE); break;
 		case I32GtU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGT); break;
 		case I32GtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGT); break;
-		case I32Add: buildBinOp(wasm.Type.I32, LLVMOpcode.Add); break;
-		case I32Sub: buildBinOp(wasm.Type.I32, LLVMOpcode.Sub); break;
-		case I32Mul: buildBinOp(wasm.Type.I32, LLVMOpcode.Mul); break;
-		case I32DivU: buildBinOp(wasm.Type.I32, LLVMOpcode.UDiv); break;
-		case I32DivS: buildBinOp(wasm.Type.I32, LLVMOpcode.SDiv); break;
-		case I32And: buildBinOp(wasm.Type.I32, LLVMOpcode.And); break;
-		case I32Or: buildBinOp(wasm.Type.I32, LLVMOpcode.Or); break;
-		case I32Xor: buildBinOp(wasm.Type.I32, LLVMOpcode.Xor); break;
-		case I32Shl: buildBinOp(wasm.Type.I32, LLVMOpcode.Shl); break;
-		case I32ShrU: buildBinOp(wasm.Type.I32, LLVMOpcode.LShr); break;
-		case I32ShrS: buildBinOp(wasm.Type.I32, LLVMOpcode.AShr); break;
 		case I32Eqz:
 			valueStack.push(wasm.Type.I32, LLVMConstInt(typeI32, 0, false));
 			buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ);
@@ -740,6 +785,23 @@ public:
 		r := valueStack.pop(t);
 		l := valueStack.pop(t);
 		v := LLVMBuildBinOp(builder, op, l, r, "");
+		valueStack.push(t, v);
+	}
+
+	fn buildBinCall(t: wasm.Type, f: LLVMValueRef)
+	{
+		args: LLVMValueRef[2];
+		args[1] = valueStack.pop(t);
+		args[0] = valueStack.pop(t);
+		v := LLVMBuildCall(builder, f, args);
+		valueStack.push(t, v);
+	}
+
+	fn buildUnaryCall(t: wasm.Type, f: LLVMValueRef)
+	{
+		args: LLVMValueRef[1];
+		args[0] = valueStack.pop(t);
+		v := LLVMBuildCall(builder, f, args);
 		valueStack.push(t, v);
 	}
 
