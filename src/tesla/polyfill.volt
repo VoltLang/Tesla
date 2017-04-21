@@ -361,6 +361,23 @@ public:
 
 	/*
 	 *
+	 * Reading the global section.
+	 *
+	 */
+
+	override fn onGlobalSection(count: u32)
+	{
+		hasProccessedGlobal = true;
+	}
+
+	override fn onGlobalEntry(num: u32, type: wasm.Type, mut: bool, exp: wasm.InitExpr)
+	{
+		onError("global entry not supported");
+	}
+
+
+	/*
+	 *
 	 * Reading the export section.
 	 *
 	 */

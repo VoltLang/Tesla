@@ -61,7 +61,7 @@ class Dumper : Reader
 		if (l.flags) {
 			io.writefln(`  (table %s %s %s)`, typeToString(elem_type), l.initial, l.maximum);
 		} else {
-			io.writefln(`  (table %s %s)`, typeToString(elem_type), l.initial);
+			io.writefln(`  (table %s %s (;0;))`, typeToString(elem_type), l.initial);
 		}
 	}
 
@@ -71,6 +71,25 @@ class Dumper : Reader
 			io.writefln(`  (memory %s %s)`, l.initial, l.maximum);
 		} else {
 			io.writefln(`  (memory %s)`, l.initial);
+		}
+	}
+
+	override fn onGlobalEntry(num: u32, type: Type, mut: bool, exp: InitExpr)
+	{
+		if (exp.isImport) {
+			io.writefln(`  (global %s %s isImport %s)`, typeToString(type),
+			            mut ? "mut" : "imm", exp.u.index);
+		} else {
+			val: string;
+			switch (type) with (Type) {
+			case I32: val = format("%s", exp.u._i32); break;
+			case I64: val = format("%s", exp.u._i64); break;
+			case F32: val = format("%s", exp.u._f32); break;
+			case F64: val = format("%s", exp.u._f64); break;
+			default: return onReadError("unsupported format in global");
+			}
+			io.writefln(`  (global %s %s %s)`, typeToString(type),
+			            mut ? "mut" : "imm", exp.u.index);
 		}
 	}
 
@@ -125,7 +144,7 @@ class Dumper : Reader
 
 	override fn onCallIndirect(typeIndex: u32)
 	{
-		io.writefln("    call %s", typeIndex);
+		io.writefln("    call_indirect %s", typeIndex);
 	}
 
 	override fn onOpMemory(op: Opcode, flags: u32, offset: u32)
@@ -182,6 +201,7 @@ class Dumper : Reader
 	override fn onFunctionSection(count: u32) {}
 	override fn onTableSection(count: u32) {}
 	override fn onMemorySection(count: u32) {}
+	override fn onGlobalSection(count: u32) {}
 	override fn onExportSection(count: u32) {}
 	override fn onCodeSection(count: u32) {}
 	override fn onCode(data: const(u8)[]) {}

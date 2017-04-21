@@ -14,6 +14,20 @@ enum SkipOrParse : u8
 	Parse = 1,
 }
 
+class InitExpr
+{
+	union U {
+		index: u32;
+		_i32: i32;
+		_i64: i64;
+		_f32: f32;
+		_f64: f64;
+	}
+	u: U;
+	type: Type;
+	isImport: bool;
+}
+
 abstract class Reader
 {
 	abstract fn onHeader(ref header: Header);
@@ -36,6 +50,9 @@ abstract class Reader
 
 	abstract fn onMemorySection(count: u32);
 	abstract fn onMemoryEntry(num: u32, l: Limits);
+
+	abstract fn onGlobalSection(count: u32);
+	abstract fn onGlobalEntry(num: u32, type: Type, mut: bool, exp: InitExpr);
 
 	abstract fn onExportSection(count: u32);
 	abstract fn onExportEntry(num: u32, name: string, kind: wasm.ExternalKind, index: u32);
@@ -280,7 +297,27 @@ fn readMemorySection(r: Reader, data: const(u8)[])
 
 fn readGlobalSection(r: Reader, data: const(u8)[])
 {
-	r.onReadError("global section");
+	num: u32;
+	count: u32;
+	if (data.readV(out count)) {
+		return r.onReadError("failed to read global section");
+	}
+	r.onGlobalSection(count);
+
+	while (count-- > 0) {
+		type: Type;
+		mut: u32;
+		ie: InitExpr;
+
+		if (data.readV(out type) ||
+		    data.readV(out mut)) {
+			return r.onReadError("failed to read global entry");
+		}
+
+		readInitExpr(r, ref data, out ie);
+
+		r.onGlobalEntry(num++, type, cast(bool)mut, ie);
+	}
 }
 
 fn readExportSection(r: Reader, data: const(u8)[])
@@ -301,6 +338,7 @@ fn readExportSection(r: Reader, data: const(u8)[])
 		    data.readV(out index)) {
 			return r.onReadError("failed to read export entry");
 		}
+
 		r.onExportEntry(num++, name, kind, index);
 	}
 }
@@ -373,6 +411,62 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	r.onFunctionBody(num, new local_types[0 .. local_count],
 	                      new local_counts[0 .. local_count]);
 
+	readOpcodes(r, ref b);
+
+	r.onFunctionBodyEnd(num);
+}
+
+fn readInitExpr(r: Reader, ref data: const(u8)[], out ret: InitExpr)
+{
+	op: Opcode;
+	if (data.readF(out op)) {
+		return r.onReadError("failed to read opcode");
+	}
+
+	ie := new InitExpr();
+
+	switch (op) with (Opcode) {
+	case I32Const:
+		if (data.readV(out ie.u._i32)) {
+			return r.onReadError("failed to read init_expr 'malformed value'");
+		}
+		break;
+	case I64Const:
+		if (data.readV(out ie.u._i64)) {
+			return r.onReadError("failed to read init_expr 'malformed value'");
+		}
+		break;
+	case F32Const:
+		if (data.readF(out ie.u._f32)) {
+			return r.onReadError("failed to read init_expr 'malformed value'");
+		}
+		break;
+	case F64Const:
+		if (data.readF(out ie.u._f64)) {
+			return r.onReadError("failed to read init_expr 'malformed value'");
+		}
+		break;
+	case GetGlobal:
+		if (data.readV(out ie.u.index)) {
+			return r.onReadError("failed to read init_expr 'malformed value'");
+		}
+		ie.isImport = true;
+		break;
+	default:
+		str := format("failed to read init_expr '%s' not supported", opToString(op));
+		return r.onReadError(str);
+	}
+
+	if (data.readF(out op) ||
+	    op != Opcode.End) {
+		return r.onReadError("failed to read init_expr");
+	}
+
+	ret = ie;
+}
+
+fn readOpcodes(r: Reader, ref b: const(u8)[])
+{
 	while (b.length > 1) {
 		op: Opcode;
 		if (b.readF(out op)) {
@@ -470,10 +564,8 @@ fn readFunctionBody(r: Reader, num: u32, ref data: const(u8)[])
 	}
 
 	if (b.length != 1 || b[0] != Opcode.End) {
-		return r.onReadError("function body not correctly terminated");
+		return r.onReadError("opcode stream not correctly terminated");
 	}
-
-	r.onFunctionBodyEnd(num);
 }
 
 enum OpcodeKind
