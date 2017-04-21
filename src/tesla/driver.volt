@@ -63,6 +63,7 @@ public:
 		if (mDump) {
 			d := new wasm.Dumper();
 			wasm.readFile(d, data);
+			io.output.flush();
 			return 0;
 		}
 
