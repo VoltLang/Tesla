@@ -402,6 +402,17 @@ public:
 
 	/*
 	 *
+	 * Reloc section.
+	 *
+	 */
+
+	override fn onRelocSection(section: wasm.Section, name: string, count: u32) {}
+	override fn onRelocEntry(num: u32, type: wasm.RelocType, offset: u32, index: u32, addend: u32) {}
+	override fn onRelocSectionEnd() {}
+
+
+	/*
+	 *
 	 * Misc.
 	 *
 	 */

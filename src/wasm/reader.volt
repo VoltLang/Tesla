@@ -57,6 +57,10 @@ abstract class Reader
 	abstract fn onExportSection(count: u32);
 	abstract fn onExportEntry(num: u32, name: string, kind: wasm.ExternalKind, index: u32);
 
+	abstract fn onRelocSection(section: wasm.Section, name: string, count: u32);
+	abstract fn onRelocEntry(num: u32, type: wasm.RelocType, offset: u32, index: u32, addend: u32);
+	abstract fn onRelocSectionEnd();
+
 	abstract fn onStart(index: u32);
 
 	abstract fn onCodeSection(count: u32);
@@ -360,6 +364,65 @@ fn readElementSection(r: Reader, data: const(u8)[])
 fn readDataSection(r: Reader, data: const(u8)[])
 {
 	r.onReadError("data section");
+}
+
+fn readRelocSection(r: Reader, data: const(u8)[])
+{
+	count: u32;
+	section: Section;
+	name: string;
+
+	if (data.readV(out section)) {
+		return r.onReadError("failed to read reloc section");
+	}
+
+	switch (section) with (Section) {
+	case Custom:
+		if (data.readV(out name)) {
+			return r.onReadError("failed to read reloc target section name");
+		}
+		break;
+	case Type, Import, Function, Table, Memory,
+	     Global, Export, Start, Element, Code, Data:
+		name = sectionToString(section);
+		break;
+	default:
+		r.onReadError("invalid section id");
+	}
+
+	if (data.readV(out count)) {
+		r.onReadError("failed to read count");
+	}
+
+	r.onRelocSection(section, name, count);
+
+	foreach (num; 0 .. count) {
+		reloc_type: RelocType;
+		offset: u32;
+		index: u32;
+		addend: u32;
+
+		if (data.readV(out reloc_type) ||
+		    data.readV(out offset) ||
+		    data.readV(out index)) {
+			return r.onReadError("failed to reloc entry");
+		}
+
+		switch (reloc_type) with (RelocType) {
+		case MemoryAddressLEB,
+		     MemoryAddressSLEB,
+		     MemoryAddressI32:
+			if (data.readV(out addend)) {
+				return r.onReadError("failed to reloc entry");
+			}
+		default:
+		}
+
+		r.onRelocEntry(num, reloc_type, offset, index, addend);
+
+	}
+
+	r.onRelocSectionEnd();
 }
 
 fn readCodeSection(r: Reader, data: const(u8)[])

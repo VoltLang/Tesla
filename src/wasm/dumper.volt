@@ -10,6 +10,7 @@ import wasm.defines;
 import wasm.structs;
 import wasm.reader;
 
+import wasm.leb;
 
 class Dumper : Reader
 {
@@ -24,6 +25,21 @@ class Dumper : Reader
 		case Element, Data: return SkipOrParse.Skip;
 		default: return SkipOrParse.Parse;
 		}
+	}
+
+	override fn onCustomSection(name: string, data: const(u8)[])
+	{
+		if (name == "reloc.DATA" || name == "reloc.CODE") {
+			return readRelocSection(this, data);
+		}
+
+		io.writef(`  (section "%s" %s`, name, data.length);
+		foreach (i, d; data) {
+			if (!(i % 16))
+				io.writef("\n    ");
+			io.writef("%02x ", d);
+		}
+		io.writefln("\n  )");
 	}
 
 	override fn onTypeEntry(num: u32, from: Type, args: Type[], ret: Type)
@@ -101,6 +117,23 @@ class Dumper : Reader
 	override fn onStart(index: u32)
 	{
 		io.writefln(`  (start %s)`, index);
+	}
+
+	override fn onRelocSection(section: Section, name: string, count: u32)
+	{
+		io.writefln(`  (relocs "%s" (;%s;)`, name, count);
+	}
+
+	override fn onRelocEntry(num: u32, type: RelocType, offset: u32,
+	                         index: u32, addend: u32)
+	{
+		io.writefln(`    (reloc "%s" %s %s %s)`, relocToString(type),
+		            index, offset, addend);
+	}
+
+	override fn onRelocSectionEnd()
+	{
+		io.writefln(`  )`);
 	}
 
 	override fn onFunctionBody(num: u32, types: Type[], counts: u32[])
@@ -195,7 +228,6 @@ class Dumper : Reader
 		io.writefln(")");
 	}
 
-	override fn onCustomSection(name: string, data: const(u8)[]) {}
 	override fn onTypeSection(count: u32) {}
 	override fn onImportSection(count: u32) {}
 	override fn onFunctionSection(count: u32) {}
