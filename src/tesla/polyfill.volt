@@ -805,6 +805,7 @@ public:
 		r := valueStack.pop(t);
 		l := valueStack.pop(t);
 		v := LLVMBuildICmp(builder, p, l, r, "");
+		v = LLVMBuildZExtOrBitCast(builder, v, typeI32, "");
 		valueStack.push(wasm.Type.I32, v);
 	}
 
