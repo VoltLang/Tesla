@@ -136,6 +136,15 @@ enum LLVMRealPredicate
 	PredicateTrue   /**< Always true (always folded) */
 }
 
+enum LLVMThreadLocalMode
+{
+	NotThreadLocal = 0,
+	GeneralDynamic,
+	LocalDynamic,
+	InitialExec,
+	LocalExec
+}
+
 extern(C):
 
 fn LLVMContextCreate() LLVMContextRef;
@@ -182,7 +191,32 @@ fn LLVMVectorType(LLVMTypeRef, u32) LLVMTypeRef;
 u32 LLVMGetVectorSize(LLVMTypeRef);
 
 // Const
+fn LLVMConstNull(LLVMTypeRef) LLVMValueRef;
 fn LLVMConstInt(LLVMTypeRef, u64, LLVMBool) LLVMValueRef;
+fn LLVMConstAllOnes(LLVMTypeRef) LLVMValueRef;
+fn LLVMGetUndef(LLVMTypeRef) LLVMValueRef;
+fn LLVMIsNull(LLVMValueRef) LLVMBool;
+fn LLVMConstPointerNull(LLVMTypeRef) LLVMValueRef;
+
+// Global
+fn LLVMAddGlobal(LLVMModuleRef, LLVMTypeRef, const(char)*) LLVMValueRef;
+fn LLVMAddGlobalInAddressSpace(LLVMModuleRef, LLVMTypeRef, const(char)*, u32) LLVMValueRef;
+fn LLVMGetNamedGlobal(LLVMModuleRef, const(char)*) LLVMValueRef;
+fn LLVMGetFirstGlobal(LLVMModuleRef) LLVMValueRef;
+fn LLVMGetLastGlobal(LLVMModuleRef) LLVMValueRef;
+fn LLVMGetNextGlobal(LLVMValueRef) LLVMValueRef;
+fn LLVMGetPreviousGlobal(LLVMValueRef) LLVMValueRef;
+fn LLVMDeleteGlobal(LLVMValueRef);
+fn LLVMGetInitializer(LLVMValueRef) LLVMValueRef;
+fn LLVMSetInitializer(LLVMValueRef, LLVMValueRef);
+fn LLVMIsThreadLocal(LLVMValueRef) LLVMBool;
+fn LLVMSetThreadLocal(LLVMValueRef, LLVMBool);
+fn LLVMIsGlobalConstant(LLVMValueRef) LLVMBool;
+fn LLVMSetGlobalConstant(LLVMValueRef, LLVMBool);
+fn LLVMGetThreadLocalMode(LLVMValueRef) LLVMThreadLocalMode;
+fn LLVMSetThreadLocalMode(LLVMValueRef, LLVMThreadLocalMode);
+fn LLVMIsExternallyInitialized(LLVMValueRef) LLVMBool;
+fn LLVMSetExternallyInitialized(LLVMValueRef, LLVMBool);
 
 // Builder
 fn LLVMCreateBuilderInContext(LLVMContextRef) LLVMBuilderRef;
