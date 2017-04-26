@@ -796,6 +796,65 @@ public:
 			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
 			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
 			break;
+		case F32ReinterpretI32:
+			v := valueStack.pop(wasm.Type.I32);
+			llvmType := typeF32;
+			v = LLVMBuildBitCast(builder, v, llvmType, "");
+			valueStack.push(wasm.Type.F32, v);
+			break;
+		case F64ConvertSI32:
+			v := valueStack.pop(wasm.Type.I32);
+			lop := LLVMOpcode.SIToFP;
+			llvmType := typeF64;
+			v = LLVMBuildCast(builder, lop, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case F64ConvertUI32:
+			v := valueStack.pop(wasm.Type.I32);
+			lop := LLVMOpcode.UIToFP;
+			llvmType := typeF64;
+			v = LLVMBuildCast(builder, lop, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case F64ConvertSI64:
+			v := valueStack.pop(wasm.Type.I64);
+			lop := LLVMOpcode.SIToFP;
+			llvmType := typeF64;
+			v = LLVMBuildCast(builder, lop, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case F64ConvertUI64:
+			v := valueStack.pop(wasm.Type.I64);
+			lop := LLVMOpcode.UIToFP;
+			llvmType := typeF64;
+			v = LLVMBuildCast(builder, lop, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case F64PromoteF32:
+			v := valueStack.pop(wasm.Type.F32);
+			lop := LLVMOpcode.FPExt;
+			llvmType := typeF64;
+			v = LLVMBuildCast(builder, lop, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case F64ReinterpretI64:
+			v := valueStack.pop(wasm.Type.I64);
+			llvmType := typeF64;
+			v = LLVMBuildBitCast(builder, v, llvmType, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
+		case I32ReinterpretF32:
+			v := valueStack.pop(wasm.Type.F32);
+			llvmType := typeI32;
+			v = LLVMBuildBitCast(builder, v, llvmType, "");
+			valueStack.push(wasm.Type.I32, v);
+			break;
+		case I64ReinterpretF64:
+			v := valueStack.pop(wasm.Type.F64);
+			llvmType := typeI64;
+			v = LLVMBuildBitCast(builder, v, llvmType, "");
+			valueStack.push(wasm.Type.I64, v);
+			break;
 		case Select:
 			c := valueStack.pop(wasm.Type.I32);
 			t := valueStack.topType();
