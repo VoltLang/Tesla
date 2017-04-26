@@ -125,6 +125,11 @@ public:
 	fnTeslaI64Rotl: LLVMValueRef;
 	fnTeslaI64Rotr: LLVMValueRef;
 
+	fnTeslaF32Neg: LLVMValueRef;
+	fnTeslaF32Div: LLVMValueRef;
+	fnTeslaF64Neg: LLVMValueRef;
+	fnTeslaF64Div: LLVMValueRef;
+
 	fnTeslaI32Load: LLVMValueRef;
 	fnTeslaI64Load: LLVMValueRef;
 	fnTeslaF32Load: LLVMValueRef;
@@ -149,8 +154,38 @@ public:
 	fnTeslaI64Store16: LLVMValueRef;
 	fnTeslaI64Store32: LLVMValueRef;
 
+
+	fnTeslaI32TruncSF32: LLVMValueRef;
+	fnTeslaI32TruncUF32: LLVMValueRef;
+	fnTeslaI32TruncSF64: LLVMValueRef;
+	fnTeslaI32TruncUF64: LLVMValueRef;
+	fnTeslaI64TruncSF32: LLVMValueRef;
+	fnTeslaI64TruncUF32: LLVMValueRef;
+	fnTeslaI64TruncSF64: LLVMValueRef;
+	fnTeslaI64TruncUF64: LLVMValueRef;
+	fnTeslaF32DemoteF64: LLVMValueRef;
+
 	fnLLVM_ctpop_i32: LLVMValueRef;
 	fnLLVM_ctpop_i64: LLVMValueRef;
+	fnLLVM_fabs_f32: LLVMValueRef;
+	fnLLVM_ceil_f32: LLVMValueRef;
+	fnLLVM_floor_f32: LLVMValueRef;
+	fnLLVM_trunc_f32: LLVMValueRef;
+	fnLLVM_nearbyint_f32: LLVMValueRef;
+	fnLLVM_sqrt_f32: LLVMValueRef;
+	fnLLVM_minnum_f32: LLVMValueRef;
+	fnLLVM_maxnum_f32: LLVMValueRef;
+	fnLLVM_copysign_f32: LLVMValueRef;
+	fnLLVM_fabs_f64: LLVMValueRef;
+	fnLLVM_ceil_f64: LLVMValueRef;
+	fnLLVM_floor_f64: LLVMValueRef;
+	fnLLVM_trunc_f64: LLVMValueRef;
+	fnLLVM_nearbyint_f64: LLVMValueRef;
+	fnLLVM_sqrt_f64: LLVMValueRef;
+	fnLLVM_minnum_f64: LLVMValueRef;
+	fnLLVM_maxnum_f64: LLVMValueRef;
+	fnLLVM_copysign_f64: LLVMValueRef;
+
 
 	// Hack for now.
 	@property fn isLinkable() bool { return true; }
@@ -235,6 +270,24 @@ public:
 		unaryI64Args[0] = typeI64;
 		unaryI64 := LLVMFunctionType(typeI64, unaryI64Args, false);
 
+		binF32Args: LLVMTypeRef[2];
+		binF32Args[0] = typeF32;
+		binF32Args[1] = typeF32;
+		binF32 := LLVMFunctionType(typeF32, binF32Args, false);
+
+		unaryF32Args: LLVMTypeRef[1];
+		unaryF32Args[0] = typeF32;
+		unaryF32 := LLVMFunctionType(typeF32, unaryF32Args, false);
+
+		binF64Args: LLVMTypeRef[2];
+		binF64Args[0] = typeF64;
+		binF64Args[1] = typeF64;
+		binF64 := LLVMFunctionType(typeF64, binF64Args, false);
+
+		unaryF64Args: LLVMTypeRef[1];
+		unaryF64Args[0] = typeF64;
+		unaryF64 := LLVMFunctionType(typeF64, unaryF64Args, false);
+
 		loadArgs: LLVMTypeRef[1];
 		loadArgs[0] = typeI32;
 		loadI32 := LLVMFunctionType(typeI32, loadArgs, false);
@@ -280,6 +333,11 @@ public:
 		fnTeslaI64Rotl = LLVMAddFunction(this.mod, "__tesla_op_i64_rotl", binI64);
 		fnTeslaI64Rotr = LLVMAddFunction(this.mod, "__tesla_op_i64_rotr", binI64);
 
+		fnTeslaF32Neg = LLVMAddFunction(this.mod, "__tesla_op_f32_neg", unaryF32);
+		fnTeslaF32Div = LLVMAddFunction(this.mod, "__tesla_op_f32_div", binF32);
+		fnTeslaF64Neg = LLVMAddFunction(this.mod, "__tesla_op_f64_neg", unaryF64);
+		fnTeslaF64Div = LLVMAddFunction(this.mod, "__tesla_op_f64_div", binF64);
+
 		fnTeslaI32Load = LLVMAddFunction(this.mod, "__tesla_op_i32_load", loadI32);
 		fnTeslaI64Load = LLVMAddFunction(this.mod, "__tesla_op_i64_load", loadI64);
 		fnTeslaF32Load = LLVMAddFunction(this.mod, "__tesla_op_f32_load", loadF32);
@@ -304,8 +362,45 @@ public:
 		fnTeslaI64Store16 = LLVMAddFunction(this.mod, "__tesla_op_i64_store16", storeI64);
 		fnTeslaI64Store32 = LLVMAddFunction(this.mod, "__tesla_op_i64_store32", storeI64);
 
+		fnTeslaI32TruncSF32 = LLVMAddFunction(this.mod, "__tesla_op_i32_trunc_s_f32",
+			LLVMFunctionType(typeI32, unaryF32Args, false));
+		fnTeslaI32TruncUF32 = LLVMAddFunction(this.mod, "__tesla_op_i32_trunc_u_f32",
+			LLVMFunctionType(typeI32, unaryF32Args, false));
+		fnTeslaI32TruncSF64 = LLVMAddFunction(this.mod, "__tesla_op_i32_trunc_s_f64",
+			LLVMFunctionType(typeI32, unaryF64Args, false));
+		fnTeslaI32TruncUF64 = LLVMAddFunction(this.mod, "__tesla_op_i32_trunc_u_f64",
+			LLVMFunctionType(typeI32, unaryF64Args, false));
+		fnTeslaI64TruncSF32 = LLVMAddFunction(this.mod, "__tesla_op_i64_trunc_s_f32",
+			LLVMFunctionType(typeI64, unaryF32Args, false));
+		fnTeslaI64TruncUF32 = LLVMAddFunction(this.mod, "__tesla_op_i64_trunc_u_f32",
+			LLVMFunctionType(typeI64, unaryF32Args, false));
+		fnTeslaI64TruncSF64 = LLVMAddFunction(this.mod, "__tesla_op_i64_trunc_s_f64",
+			LLVMFunctionType(typeI64, unaryF64Args, false));
+		fnTeslaI64TruncUF64 = LLVMAddFunction(this.mod, "__tesla_op_i64_trunc_u_f64",
+			LLVMFunctionType(typeI64, unaryF64Args, false));
+		fnTeslaF32DemoteF64 = LLVMAddFunction(this.mod, "__tesla_op_f32_Demote_f64",
+			LLVMFunctionType(typeF32, unaryF64Args, false));
+
 		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
 		fnLLVM_ctpop_i64 = LLVMAddFunction(this.mod, "llvm.ctpop.i64", unaryI64);
+		fnLLVM_fabs_f32 = LLVMAddFunction(this.mod, "llvm.fabs.f32", unaryF32);
+		fnLLVM_ceil_f32 = LLVMAddFunction(this.mod, "llvm.ceil.f32", unaryF32);
+		fnLLVM_floor_f32 = LLVMAddFunction(this.mod, "llvm.floor.f32", unaryF32);
+		fnLLVM_trunc_f32 = LLVMAddFunction(this.mod, "llvm.trunc.f32", unaryF32);
+		fnLLVM_nearbyint_f32 = LLVMAddFunction(this.mod, "llvm.nearbyint.f32", unaryF32);
+		fnLLVM_sqrt_f32 = LLVMAddFunction(this.mod, "llvm.sqrt.f32", unaryF32);
+		fnLLVM_minnum_f32 = LLVMAddFunction(this.mod, "llvm.minnum.f32", binF32);
+		fnLLVM_maxnum_f32 = LLVMAddFunction(this.mod, "llvm.maxnum.f32", binF32);
+		fnLLVM_copysign_f32 = LLVMAddFunction(this.mod, "llvm.copysign.f32", unaryF32);
+		fnLLVM_fabs_f64 = LLVMAddFunction(this.mod, "llvm.fabs.f64", unaryF64);
+		fnLLVM_ceil_f64 = LLVMAddFunction(this.mod, "llvm.ceil.f64", unaryF64);
+		fnLLVM_floor_f64 = LLVMAddFunction(this.mod, "llvm.floor.f64", unaryF64);
+		fnLLVM_trunc_f64 = LLVMAddFunction(this.mod, "llvm.trunc.f64", unaryF64);
+		fnLLVM_nearbyint_f64 = LLVMAddFunction(this.mod, "llvm.nearbyint.f64", unaryF64);
+		fnLLVM_sqrt_f64 = LLVMAddFunction(this.mod, "llvm.sqrt.f64", unaryF64);
+		fnLLVM_minnum_f64 = LLVMAddFunction(this.mod, "llvm.minnum.f64", binF64);
+		fnLLVM_maxnum_f64 = LLVMAddFunction(this.mod, "llvm.maxnum.f64", binF64);
+		fnLLVM_copysign_f64 = LLVMAddFunction(this.mod, "llvm.copysign.f64", unaryF64);
 
 		globalTeslaStack = LLVMAddGlobal(this.mod, typeI32, "__tesla_stack_ptr");
 		LLVMSetInitializer(globalTeslaStack, LLVMConstNull(typeI32));
@@ -639,6 +734,8 @@ public:
 
 	override fn onFunctionBodyEnd(num: u32)
 	{
+		//io.writefln("end");
+
 		buildRet();
 		currentBlock = null;
 		currentLocals = null;
@@ -647,6 +744,8 @@ public:
 
 	override fn onOpI32Const(v: i32)
 	{
+		//io.writefln("i32.const");
+
 		ensureBlock(wasm.Opcode.I32Const);
 
 		llvmValue := LLVMConstInt(typeI32, cast(u64)v, false);
@@ -655,14 +754,33 @@ public:
 
 	override fn onOpI64Const(v: i64)
 	{
+		//io.writefln("i64.const");
+
 		ensureBlock(wasm.Opcode.I64Const);
 
 		llvmValue := LLVMConstInt(typeI64, cast(u64)v, false);
 		valueStack.push(wasm.Type.I64, llvmValue);
 	}
 
-	override fn onOpF32Const(v: f32) { onError("F32Const"); }
-	override fn onOpF64Const(v: f64) { onError("F64Const"); }
+	override fn onOpF32Const(v: f32)
+	{
+		//io.writefln("f32.const");
+
+		ensureBlock(wasm.Opcode.F32Const);
+
+		llvmValue := LLVMConstReal(typeF32, v);
+		valueStack.push(wasm.Type.F32, llvmValue);
+	}
+
+	override fn onOpF64Const(v: f64)
+	{
+		//io.writefln("f64.const");
+
+		ensureBlock(wasm.Opcode.F64Const);
+
+		llvmValue := LLVMConstReal(typeF64, v);
+		valueStack.push(wasm.Type.F64, llvmValue);
+	}
 
 	override fn onControl(op: wasm.Opcode, t: wasm.Type)
 	{
@@ -779,6 +897,8 @@ public:
 
 	override fn onCallIndirect(typeIndex: u32)
 	{
+		//io.writefln("call_indirect %s", typeIndex);
+
 		ensureValidFuncTypeIndex(typeIndex, "call_indirect");
 
 		ft := funcTypes[typeIndex];
@@ -804,6 +924,15 @@ public:
 
 		switch (op) with (wasm.Opcode) {
 		case Drop: valueStack.pop(); break;
+		case Select:
+			c := valueStack.pop(wasm.Type.I32);
+			t := valueStack.topType();
+			l := valueStack.pop(t);
+			r := valueStack.pop(t);
+			v := LLVMBuildSelect(builder, c, l, r, "");
+			valueStack.push(t, v);
+			break;
+
 		// 32-bit integer.
 		case I32Add: buildBinOp(wasm.Type.I32, LLVMOpcode.Add); break;
 		case I32Sub: buildBinOp(wasm.Type.I32, LLVMOpcode.Sub); break;
@@ -823,20 +952,34 @@ public:
 		case I32Clz: buildUnaryCall(wasm.Type.I32, fnTeslaI32Clz); break;
 		case I32Ctz: buildUnaryCall(wasm.Type.I32, fnTeslaI32Ctz); break;
 		case I32Popcnt: buildUnaryCall(wasm.Type.I32, fnLLVM_ctpop_i32); break;
-		case I32Eq: buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ); break;
-		case I32Ne: buildCmp(wasm.Type.I32, LLVMIntPredicate.NE); break;
-		case I32LeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.ULE); break;
-		case I32LeS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SLE); break;
-		case I32LtU: buildCmp(wasm.Type.I32, LLVMIntPredicate.ULT); break;
-		case I32LtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SLT); break;
-		case I32GeU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGE); break;
-		case I32GeS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGE); break;
-		case I32GtU: buildCmp(wasm.Type.I32, LLVMIntPredicate.UGT); break;
-		case I32GtS: buildCmp(wasm.Type.I32, LLVMIntPredicate.SGT); break;
+		case I32Eq: buildICmp(wasm.Type.I32, LLVMIntPredicate.EQ); break;
+		case I32Ne: buildICmp(wasm.Type.I32, LLVMIntPredicate.NE); break;
+		case I32LeU: buildICmp(wasm.Type.I32, LLVMIntPredicate.ULE); break;
+		case I32LeS: buildICmp(wasm.Type.I32, LLVMIntPredicate.SLE); break;
+		case I32LtU: buildICmp(wasm.Type.I32, LLVMIntPredicate.ULT); break;
+		case I32LtS: buildICmp(wasm.Type.I32, LLVMIntPredicate.SLT); break;
+		case I32GeU: buildICmp(wasm.Type.I32, LLVMIntPredicate.UGE); break;
+		case I32GeS: buildICmp(wasm.Type.I32, LLVMIntPredicate.SGE); break;
+		case I32GtU: buildICmp(wasm.Type.I32, LLVMIntPredicate.UGT); break;
+		case I32GtS: buildICmp(wasm.Type.I32, LLVMIntPredicate.SGT); break;
 		case I32Eqz:
 			valueStack.push(wasm.Type.I32, LLVMConstInt(typeI32, 0, false));
-			buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ);
+			buildICmp(wasm.Type.I32, LLVMIntPredicate.EQ);
 			break;
+
+		case F32Eq: buildFCmp(wasm.Type.F32, LLVMRealPredicate.OEQ); break;
+		case F32Ne: buildFCmp(wasm.Type.F32, LLVMRealPredicate.ONE); break;
+		case F32Lt: buildFCmp(wasm.Type.F32, LLVMRealPredicate.OLT); break;
+		case F32Gt: buildFCmp(wasm.Type.F32, LLVMRealPredicate.OGT); break;
+		case F32Le: buildFCmp(wasm.Type.F32, LLVMRealPredicate.OLE); break;
+		case F32Ge: buildFCmp(wasm.Type.F32, LLVMRealPredicate.OGE); break;
+		case F64Eq: buildFCmp(wasm.Type.F64, LLVMRealPredicate.OEQ); break;
+		case F64Ne: buildFCmp(wasm.Type.F64, LLVMRealPredicate.ONE); break;
+		case F64Lt: buildFCmp(wasm.Type.F64, LLVMRealPredicate.OLT); break;
+		case F64Gt: buildFCmp(wasm.Type.F64, LLVMRealPredicate.OGT); break;
+		case F64Le: buildFCmp(wasm.Type.F64, LLVMRealPredicate.OLE); break;
+		case F64Ge: buildFCmp(wasm.Type.F64, LLVMRealPredicate.OGE); break;
+
 		// 64-bit integer.
 		case I64Add: buildBinOp(wasm.Type.I64, LLVMOpcode.Add); break;
 		case I64Sub: buildBinOp(wasm.Type.I64, LLVMOpcode.Sub); break;
@@ -856,53 +999,77 @@ public:
 		case I64Clz: buildUnaryCall(wasm.Type.I64, fnTeslaI64Clz); break;
 		case I64Ctz: buildUnaryCall(wasm.Type.I64, fnTeslaI64Ctz); break;
 		case I64Popcnt: buildUnaryCall(wasm.Type.I64, fnLLVM_ctpop_i64); break;
-		case I64Eq: buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ); break;
-		case I64Ne: buildCmp(wasm.Type.I64, LLVMIntPredicate.NE); break;
-		case I64LeU: buildCmp(wasm.Type.I64, LLVMIntPredicate.ULE); break;
-		case I64LeS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SLE); break;
-		case I64LtU: buildCmp(wasm.Type.I64, LLVMIntPredicate.ULT); break;
-		case I64LtS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SLT); break;
-		case I64GeU: buildCmp(wasm.Type.I64, LLVMIntPredicate.UGE); break;
-		case I64GeS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGE); break;
-		case I64GtU: buildCmp(wasm.Type.I64, LLVMIntPredicate.UGT); break;
-		case I64GtS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGT); break;
+		case I64Eq: buildICmp(wasm.Type.I64, LLVMIntPredicate.EQ); break;
+		case I64Ne: buildICmp(wasm.Type.I64, LLVMIntPredicate.NE); break;
+		case I64LeU: buildICmp(wasm.Type.I64, LLVMIntPredicate.ULE); break;
+		case I64LeS: buildICmp(wasm.Type.I64, LLVMIntPredicate.SLE); break;
+		case I64LtU: buildICmp(wasm.Type.I64, LLVMIntPredicate.ULT); break;
+		case I64LtS: buildICmp(wasm.Type.I64, LLVMIntPredicate.SLT); break;
+		case I64GeU: buildICmp(wasm.Type.I64, LLVMIntPredicate.UGE); break;
+		case I64GeS: buildICmp(wasm.Type.I64, LLVMIntPredicate.SGE); break;
+		case I64GtU: buildICmp(wasm.Type.I64, LLVMIntPredicate.UGT); break;
+		case I64GtS: buildICmp(wasm.Type.I64, LLVMIntPredicate.SGT); break;
 		case I64Eqz:
 			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
-			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
+			buildICmp(wasm.Type.I64, LLVMIntPredicate.EQ);
 			break;
-		case I32WrapI64: buildBitCast(wasm.Type.I64, wasm.Type.I32, typeI32); break;
-//		case I32TruncSF32: traps
-//		case I32TruncUF32: traps
-//		case I32TruncSF64: traps
-//		case I32TruncUF64: traps
-		case I64ExtendSI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.SExt); break;
-		case I64ExtendUI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.ZExt); break;
-//		case I64TruncSF32: traps
-//		case I64TruncUF32: traps
-//		case I64TruncSF64: traps
-//		case I64TruncUF64: traps
-		case F32ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); break;
-		case F32ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); break;
-		case F32ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); break;
-		case F32ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); break;
-//		case F32DemoteF64: traps
-		case F64ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); break;
-		case F64ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); break;
-		case F64ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); break;
-		case F64ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); break;
-		case F64PromoteF32: buildCast(wasm.Type.F32, wasm.Type.F64, typeF64, LLVMOpcode.FPExt); break;
-		case I32ReinterpretF32: buildBitCast(wasm.Type.F32, wasm.Type.I32, typeI32); break;
-		case I64ReinterpretF64: buildBitCast(wasm.Type.F64, wasm.Type.I64, typeI64); break;
-		case F32ReinterpretI32: buildBitCast(wasm.Type.I32, wasm.Type.F32, typeF32); break;
-		case F64ReinterpretI64: buildBitCast(wasm.Type.I64, wasm.Type.F64, typeF64); break;
-		case Select:
-			c := valueStack.pop(wasm.Type.I32);
-			t := valueStack.topType();
-			l := valueStack.pop(t);
-			r := valueStack.pop(t);
-			v := LLVMBuildSelect(builder, c, l, r, "");
-			valueStack.push(t, v);
-			break;
+
+		// FLoating ops
+		case F32Abs: buildUnaryCall(wasm.Type.F32, fnLLVM_fabs_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Neg: buildUnaryCall(wasm.Type.F32, fnTeslaF32Neg); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Ceil: buildUnaryCall(wasm.Type.F32, fnLLVM_ceil_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Floor: buildUnaryCall(wasm.Type.F32, fnLLVM_floor_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Trunc: buildUnaryCall(wasm.Type.F32, fnLLVM_trunc_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Nearest: buildUnaryCall(wasm.Type.F32, fnLLVM_nearbyint_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Sqrt: buildUnaryCall(wasm.Type.F32, fnLLVM_sqrt_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Add: buildBinOp(wasm.Type.F32, LLVMOpcode.FAdd); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Sub: buildBinOp(wasm.Type.F32, LLVMOpcode.FSub); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Mul: buildBinOp(wasm.Type.F32, LLVMOpcode.FMul); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Div: buildBinCall(wasm.Type.F32, fnTeslaF32Div); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Min: buildBinCall(wasm.Type.F32, fnLLVM_minnum_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Max: buildBinCall(wasm.Type.F32, fnLLVM_maxnum_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Copysign: buildUnaryCall(wasm.Type.F32, fnLLVM_copysign_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F64Abs: buildUnaryCall(wasm.Type.F64, fnLLVM_fabs_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Neg: buildUnaryCall(wasm.Type.F64, fnTeslaF64Neg); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Ceil: buildUnaryCall(wasm.Type.F64, fnLLVM_ceil_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Floor: buildUnaryCall(wasm.Type.F64, fnLLVM_floor_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Trunc: buildUnaryCall(wasm.Type.F64, fnLLVM_trunc_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Nearest: buildUnaryCall(wasm.Type.F64, fnLLVM_nearbyint_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Sqrt: buildUnaryCall(wasm.Type.F64, fnLLVM_sqrt_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Add: buildBinOp(wasm.Type.F64, LLVMOpcode.FAdd); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Sub: buildBinOp(wasm.Type.F64, LLVMOpcode.FSub); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Mul: buildBinOp(wasm.Type.F64, LLVMOpcode.FMul); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Div: buildBinCall(wasm.Type.F64, fnTeslaF64Div); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Min: buildBinCall(wasm.Type.F64, fnLLVM_minnum_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Max: buildBinCall(wasm.Type.F64, fnLLVM_maxnum_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Copysign: buildUnaryCall(wasm.Type.F64, fnLLVM_copysign_f64); valueStack.checkTop(wasm.Type.F64); break;
+
+		// Conversions
+		case I32WrapI64: buildBitCast(wasm.Type.I64, wasm.Type.I32, typeI32); valueStack.checkTop(wasm.Type.I32); break;
+		case I32TruncSF32: buildConvCall(wasm.Type.F32, wasm.Type.I32, fnTeslaI32TruncSF32); valueStack.checkTop(wasm.Type.I32); break;
+		case I32TruncUF32: buildConvCall(wasm.Type.F32, wasm.Type.I32, fnTeslaI32TruncUF32); valueStack.checkTop(wasm.Type.I32); break;
+		case I32TruncSF64: buildConvCall(wasm.Type.F64, wasm.Type.I32, fnTeslaI32TruncSF64); valueStack.checkTop(wasm.Type.I32); break;
+		case I32TruncUF64: buildConvCall(wasm.Type.F64, wasm.Type.I32, fnTeslaI32TruncUF64); valueStack.checkTop(wasm.Type.I32); break;
+		case I64ExtendSI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.SExt); valueStack.checkTop(wasm.Type.I64); break;
+		case I64ExtendUI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.ZExt); valueStack.checkTop(wasm.Type.I64); break;
+		case I64TruncSF32: buildConvCall(wasm.Type.F32, wasm.Type.I64, fnTeslaI64TruncSF32); valueStack.checkTop(wasm.Type.I64); break;
+		case I64TruncUF32: buildConvCall(wasm.Type.F32, wasm.Type.I64, fnTeslaI64TruncUF32); valueStack.checkTop(wasm.Type.I64); break;
+		case I64TruncSF64: buildConvCall(wasm.Type.F64, wasm.Type.I64, fnTeslaI64TruncSF64); valueStack.checkTop(wasm.Type.I64); break;
+		case I64TruncUF64: buildConvCall(wasm.Type.F64, wasm.Type.I64, fnTeslaI64TruncUF64); valueStack.checkTop(wasm.Type.I64); break;
+		case F32ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); valueStack.checkTop(wasm.Type.F32); break;
+		case F32ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); valueStack.checkTop(wasm.Type.F32); break;
+		case F32ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); valueStack.checkTop(wasm.Type.F32); break;
+		case F32ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); valueStack.checkTop(wasm.Type.F32); break;
+		case F32DemoteF64: buildConvCall(wasm.Type.F64, wasm.Type.F32, fnTeslaF32DemoteF64); valueStack.checkTop(wasm.Type.F32); break;
+		case F64ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); valueStack.checkTop(wasm.Type.F64); break;
+		case F64ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); valueStack.checkTop(wasm.Type.F64); break;
+		case F64ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); valueStack.checkTop(wasm.Type.F64); break;
+		case F64ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); valueStack.checkTop(wasm.Type.F64); break;
+		case F64PromoteF32: buildCast(wasm.Type.F32, wasm.Type.F64, typeF64, LLVMOpcode.FPExt); valueStack.checkTop(wasm.Type.F64); break;
+		case I32ReinterpretF32: buildBitCast(wasm.Type.F32, wasm.Type.I32, typeI32); valueStack.checkTop(wasm.Type.I32); break;
+		case I64ReinterpretF64: buildBitCast(wasm.Type.F64, wasm.Type.I64, typeI64); valueStack.checkTop(wasm.Type.I64); break;
+		case F32ReinterpretI32: buildBitCast(wasm.Type.I32, wasm.Type.F32, typeF32); valueStack.checkTop(wasm.Type.F32); break;
+		case F64ReinterpretI64: buildBitCast(wasm.Type.I64, wasm.Type.F64, typeF64); valueStack.checkTop(wasm.Type.F64); break;
 		default:
 			unhandledOp(op, "generic");
 		}
@@ -1022,11 +1189,20 @@ public:
 		}
 	}
 
-	fn buildCmp(t: wasm.Type, p: LLVMIntPredicate)
+	fn buildICmp(t: wasm.Type, p: LLVMIntPredicate)
 	{
 		r := valueStack.pop(t);
 		l := valueStack.pop(t);
 		v := LLVMBuildICmp(builder, p, l, r, "");
+		v = LLVMBuildZExtOrBitCast(builder, v, typeI32, "");
+		valueStack.push(wasm.Type.I32, v);
+	}
+
+	fn buildFCmp(t: wasm.Type, p: LLVMRealPredicate)
+	{
+		r := valueStack.pop(t);
+		l := valueStack.pop(t);
+		v := LLVMBuildFCmp(builder, p, l, r, "");
 		v = LLVMBuildZExtOrBitCast(builder, v, typeI32, "");
 		valueStack.push(wasm.Type.I32, v);
 	}
@@ -1067,6 +1243,14 @@ public:
 	{
 		f := valueStack.pop(from);
 		v := LLVMBuildZExtOrBitCast(builder, f, llvmType, "");
+		valueStack.push(to, v);
+	}
+
+	fn buildConvCall(from: wasm.Type, to: wasm.Type, func: LLVMValueRef)
+	{
+		args: LLVMValueRef[1];
+		args[0] = valueStack.pop(from);
+		v := LLVMBuildCall(builder, func, args);
 		valueStack.push(to, v);
 	}
 
