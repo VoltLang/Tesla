@@ -197,6 +197,7 @@ fn LLVMConstAllOnes(LLVMTypeRef) LLVMValueRef;
 fn LLVMGetUndef(LLVMTypeRef) LLVMValueRef;
 fn LLVMIsNull(LLVMValueRef) LLVMBool;
 fn LLVMConstPointerNull(LLVMTypeRef) LLVMValueRef;
+fn LLVMConstReal(LLVMTypeRef, f64) LLVMValueRef;
 
 // Global
 fn LLVMAddGlobal(LLVMModuleRef, LLVMTypeRef, const(char)*) LLVMValueRef;
