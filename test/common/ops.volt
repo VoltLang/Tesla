@@ -68,6 +68,69 @@ fn __tesla_op_i32_ctz(v: i32) i32
 
 /*
  *
+ * i64 ops.
+ *
+ */
+
+fn __tesla_op_i64_div_u(l: u64, r: u64) u64
+{
+	return l / r;
+}
+
+fn __tesla_op_i64_div_s(l: i64, r: i64) i64
+{
+	return l / r;
+}
+
+fn __tesla_op_i64_rem_u(l: u64, r: u64) u64
+{
+	return l % r;
+}
+
+fn __tesla_op_i64_rem_s(l: i64, r: i64) i64
+{
+	if (l == i64.min && cast(u64)r == u64.max) {
+		return 0;
+	} else {
+		return l % r;
+	}
+}
+
+fn __tesla_op_i64_rotl(l: i64, r: i64) i64
+{
+	amount := cast(u64)r & 63u;
+	lu := cast(u64)l;
+	if (amount != 0) {
+		return cast(i64)((lu << amount) | (lu >> (64u - amount)));
+	} else {
+		return l;
+	}
+}
+
+fn __tesla_op_i64_rotr(l: i64, r: i64) i64
+{
+	amount := cast(u64)r & 63u;
+	lu := cast(u64)l;
+	if (amount != 0) {
+		return cast(i64)((lu >> amount) | (lu << (64u - amount)));
+	} else {
+		return l;
+	}
+}
+
+fn __tesla_op_i64_clz(v: i64) i64
+{
+	return v != 0 ? __llvm_ctlz(v, false) : 64L;
+}
+
+fn __tesla_op_i64_ctz(v: i64) i64
+{
+	return v != 0 ? __llvm_cttz(v, false) : 64L;
+}
+
+
+/*
+ *
  * Shared llvm functions
  *
  */
