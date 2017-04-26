@@ -796,6 +796,7 @@ public:
 			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
 			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
 			break;
+		case I32WrapI64: buildBitCast(wasm.Type.I64, wasm.Type.I32, typeI32); break;
 //		case I32TruncSF32: traps
 //		case I32TruncUF32: traps
 //		case I32TruncSF64: traps
@@ -852,10 +853,14 @@ public:
 		case I64Load32U: buildLoad(wasm.Type.I64, typeI32, false, offset); break;
 		case I64Load32S: buildLoad(wasm.Type.I64, typeI32,  true, offset); break;
 		case I64Load:    buildLoad(wasm.Type.I64, typeI64, false, offset); break;
+		case F32Load:    buildLoad(wasm.Type.F32, typeF32, false, offset); break;
+		case F64Load:    buildLoad(wasm.Type.F64, typeF64, false, offset); break;
 		case I32Store8:  buildStore(wasm.Type.I32, typeI8, offset); break;
 		case I32Store16: buildStore(wasm.Type.I32, typeI16, offset); break;
 		case I32Store:   buildStore(wasm.Type.I32, typeI32, offset); break;
 		case I64Store:   buildStore(wasm.Type.I64, typeI64, offset); break;
+		case F32Store:   buildStore(wasm.Type.F32, typeF32, offset); break;
+		case F64Store:   buildStore(wasm.Type.F64, typeF64, offset); break;
 		default: unhandledOp(op, "memory");
 		}
 	}
