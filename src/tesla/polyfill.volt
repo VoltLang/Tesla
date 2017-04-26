@@ -36,6 +36,16 @@ public:
 	}
 }
 
+class Global
+{
+	llvmValue: LLVMValueRef;
+	initExpr: wasm.InitExpr;
+
+	type: wasm.Type;
+	isImport: bool;
+	isPointer: bool;
+}
+
 class FuncType
 {
 public:
@@ -86,12 +96,16 @@ public:
 	funcs: Func[];
 	funcTypes: FuncType[];
 
+	globals: Global[];
+
 	valueStack: ValueStack;
 	blockStack: BlockStack;
 	currentFunc: Func;
 	currentBlock: LLVMBasicBlockRef;
 	currentLocals: LLVMValueRef[];
 	currentLocalTypes: wasm.Type[];
+
+	globalTeslaStack: LLVMValueRef;
 
 	fnTeslaI32DivU: LLVMValueRef;
 	fnTeslaI32DivS: LLVMValueRef;
@@ -114,6 +128,8 @@ public:
 	fnLLVM_ctpop_i32: LLVMValueRef;
 	fnLLVM_ctpop_i64: LLVMValueRef;
 
+	// Hack for now.
+	@property fn isLinkable() bool { return true; }
 
 public:
 	this()
@@ -215,6 +231,9 @@ public:
 
 		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
 		fnLLVM_ctpop_i64 = LLVMAddFunction(this.mod, "llvm.ctpop.i64", unaryI64);
+
+		globalTeslaStack = LLVMAddGlobal(this.mod, typeI32, "__tesla_stack_ptr");
+		LLVMSetInitializer(globalTeslaStack, LLVMConstNull(typeI32));
 	}
 
 	fn toLLVMFromValueType(t: wasm.Type) LLVMTypeRef
@@ -308,7 +327,10 @@ public:
 
 	override fn onImportGlobal(num: u32, mod: string, field: string, t: wasm.Type, mut: bool)
 	{
-		return onError("can't import global");
+		g := new Global();
+		g.type = t;
+		g.isImport = true;
+		globals ~= g;
 	}
 
 	override fn onImportFunc(num: u32, mod: string, field: string, index: u32)
@@ -400,11 +422,30 @@ public:
 	override fn onGlobalSection(count: u32)
 	{
 		hasProccessedGlobal = true;
+
+		numGlobalImports = cast(u32)globals.length;
+		globals = globals ~ new Global[](count);
 	}
 
 	override fn onGlobalEntry(num: u32, type: wasm.Type, mut: bool, exp: wasm.InitExpr)
 	{
-		onError("global entry not supported");
+		realNum := numGlobalImports + num;
+
+		ensureValidGlobalIndex(realNum, "global entry");
+
+		g := new Global();
+		g.type = type;
+		g.initExpr = exp;
+
+		if (mut) {
+			g.isPointer = true;
+			llvmType := toLLVMFromValueType(type);
+			cname := format("__tesla_global_%s\0", realNum).ptr;
+			LLVMAddGlobal(this.mod, llvmType, cname);
+			// TODO initExpr.
+		} else {
+			// TODO value.
+		}
 	}
 
 
@@ -819,6 +860,42 @@ public:
 			v := valueStack.checkTop(type);
 			LLVMBuildStore(builder, v, ptr);
 			break;
+		case GetGlobal:
+			if (isLinkable && index == 0) {
+				v := LLVMBuildLoad(builder, globalTeslaStack, "");
+				valueStack.push(wasm.Type.I32, v);
+				break;
+			}
+
+			ensureValidGlobalIndex(index, "get_global");
+			if (!g.isPointer) {
+				str := format("global '%s' is not a valid readable global", index);
+				onError(str);
+				break;
+			}
+
+			g := globals[index];
+			v := LLVMBuildLoad(builder, g.llvmValue, "");
+			valueStack.push(g.type, v);
+			break;
+		case SetGlobal:
+			if (isLinkable && index == 0) {
+				v := valueStack.pop(wasm.Type.I32);
+				LLVMBuildStore(builder, v, globalTeslaStack);
+				break;
+			}
+
+			ensureValidGlobalIndex(index, "get_global");
+			if (!g.isPointer) {
+				str := format("global '%s' is not a valid readable global", index);
+				onError(str);
+				break;
+			}
+
+			g := globals[index];
+			v := valueStack.pop(g.type);
+			LLVMBuildStore(builder, v, g.llvmValue);
+			break;
 		default:
 			unhandledOp(op, "var");
 		}
@@ -952,6 +1029,16 @@ public:
 		}
 
 		str := format("invalid function type index for %s", kind);
+		onError(str, loc);
+	}
+
+	fn ensureValidGlobalIndex(index: u32, kind: string, loc: string = __LOCATION__)
+	{
+		if (index < globals.length) {
+			return;
+		}
+
+		str := format("invalid global index for %s", kind);
 		onError(str, loc);
 	}
 
