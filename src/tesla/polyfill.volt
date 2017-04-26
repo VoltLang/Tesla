@@ -1298,7 +1298,9 @@ public:
 			poly.onError("stack under run", loc);
 		}
 		if (mTypes[mNum-1] != t) {
-			poly.onError("stack type missmatch", loc);
+			str := format("stack type missmatch expected: '%s', got: '%s'",
+				wasm.typeToString(t), wasm.typeToString(mTypes[mNum-1]));
+			poly.onError(str, loc);
 		}
 		return mTs[mNum-1];
 	}
@@ -1322,7 +1324,9 @@ public:
 	{
 		checkAndPop();
 		if (mTypes[mNum] != t) {
-			poly.onError("stack type missmatch", loc);
+			str := format("stack type missmatch expected: '%s', got: '%s'",
+				wasm.typeToString(t), wasm.typeToString(mTypes[mNum]));
+			poly.onError(str, loc);
 		}
 	}
 }
