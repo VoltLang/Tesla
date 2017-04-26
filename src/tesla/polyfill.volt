@@ -766,8 +766,8 @@ public:
 		if (ft.argTypes.length > 0) {
 			args = new LLVMValueRef[](ft.argTypes.length);
 			c := args.length;
-			foreach (i, a; ft.argTypes) {
-				args[--c] = valueStack.pop(a);
+			foreach_reverse (i, a; ft.argTypes) {
+				args[i] = valueStack.pop(a);
 			}
 		}
 
@@ -786,9 +786,8 @@ public:
 
 		if (ft.argTypes.length > 0) {
 			args = new LLVMValueRef[](ft.argTypes.length);
-			c := args.length;
-			foreach (i, a; ft.argTypes) {
-				args[--c] = valueStack.pop(a);
+			foreach_reverse (i, a; ft.argTypes) {
+				args[i] = valueStack.pop(a);
 			}
 		}
 
