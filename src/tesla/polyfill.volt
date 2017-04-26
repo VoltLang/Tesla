@@ -796,65 +796,30 @@ public:
 			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
 			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
 			break;
-		case F32ReinterpretI32:
-			v := valueStack.pop(wasm.Type.I32);
-			llvmType := typeF32;
-			v = LLVMBuildBitCast(builder, v, llvmType, "");
-			valueStack.push(wasm.Type.F32, v);
-			break;
-		case F64ConvertSI32:
-			v := valueStack.pop(wasm.Type.I32);
-			lop := LLVMOpcode.SIToFP;
-			llvmType := typeF64;
-			v = LLVMBuildCast(builder, lop, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case F64ConvertUI32:
-			v := valueStack.pop(wasm.Type.I32);
-			lop := LLVMOpcode.UIToFP;
-			llvmType := typeF64;
-			v = LLVMBuildCast(builder, lop, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case F64ConvertSI64:
-			v := valueStack.pop(wasm.Type.I64);
-			lop := LLVMOpcode.SIToFP;
-			llvmType := typeF64;
-			v = LLVMBuildCast(builder, lop, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case F64ConvertUI64:
-			v := valueStack.pop(wasm.Type.I64);
-			lop := LLVMOpcode.UIToFP;
-			llvmType := typeF64;
-			v = LLVMBuildCast(builder, lop, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case F64PromoteF32:
-			v := valueStack.pop(wasm.Type.F32);
-			lop := LLVMOpcode.FPExt;
-			llvmType := typeF64;
-			v = LLVMBuildCast(builder, lop, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case F64ReinterpretI64:
-			v := valueStack.pop(wasm.Type.I64);
-			llvmType := typeF64;
-			v = LLVMBuildBitCast(builder, v, llvmType, "");
-			valueStack.push(wasm.Type.F64, v);
-			break;
-		case I32ReinterpretF32:
-			v := valueStack.pop(wasm.Type.F32);
-			llvmType := typeI32;
-			v = LLVMBuildBitCast(builder, v, llvmType, "");
-			valueStack.push(wasm.Type.I32, v);
-			break;
-		case I64ReinterpretF64:
-			v := valueStack.pop(wasm.Type.F64);
-			llvmType := typeI64;
-			v = LLVMBuildBitCast(builder, v, llvmType, "");
-			valueStack.push(wasm.Type.I64, v);
-			break;
+//		case I32TruncSF32: traps
+//		case I32TruncUF32: traps
+//		case I32TruncSF64: traps
+//		case I32TruncUF64: traps
+		case I64ExtendSI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.SExt); break;
+		case I64ExtendUI32: buildCast(wasm.Type.I32, wasm.Type.I64, typeI64, LLVMOpcode.ZExt); break;
+//		case I64TruncSF32: traps
+//		case I64TruncUF32: traps
+//		case I64TruncSF64: traps
+//		case I64TruncUF64: traps
+		case F32ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); break;
+		case F32ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); break;
+		case F32ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.SIToFP); break;
+		case F32ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F32, typeF32, LLVMOpcode.UIToFP); break;
+//		case F32DemoteF64: traps
+		case F64ConvertSI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); break;
+		case F64ConvertUI32: buildCast(wasm.Type.I32, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); break;
+		case F64ConvertSI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.SIToFP); break;
+		case F64ConvertUI64: buildCast(wasm.Type.I64, wasm.Type.F64, typeF64, LLVMOpcode.UIToFP); break;
+		case F64PromoteF32: buildCast(wasm.Type.F32, wasm.Type.F64, typeF64, LLVMOpcode.FPExt); break;
+		case I32ReinterpretF32: buildBitCast(wasm.Type.F32, wasm.Type.I32, typeI32); break;
+		case I64ReinterpretF64: buildBitCast(wasm.Type.F64, wasm.Type.I64, typeI64); break;
+		case F32ReinterpretI32: buildBitCast(wasm.Type.I32, wasm.Type.F32, typeF32); break;
+		case F64ReinterpretI64: buildBitCast(wasm.Type.I64, wasm.Type.F64, typeF64); break;
 		case Select:
 			c := valueStack.pop(wasm.Type.I32);
 			t := valueStack.topType();
@@ -1007,6 +972,20 @@ public:
 		args[0] = valueStack.pop(t);
 		v := LLVMBuildCall(builder, f, args);
 		valueStack.push(t, v);
+	}
+
+	fn buildCast(from: wasm.Type, to: wasm.Type, llvmType: LLVMTypeRef, lop: LLVMOpcode)
+	{
+		v := valueStack.pop(from);
+		v = LLVMBuildCast(builder, lop, v, llvmType, "");
+		valueStack.push(to, v);
+	}
+
+	fn buildBitCast(from: wasm.Type, to: wasm.Type, llvmType: LLVMTypeRef)
+	{
+		f := valueStack.pop(from);
+		v := LLVMBuildZExtOrBitCast(builder, f, llvmType, "");
+		valueStack.push(to, v);
 	}
 
 	fn buildLoad(t: wasm.Type, srcBaseType: LLVMTypeRef, signed: bool, offset: u32)
