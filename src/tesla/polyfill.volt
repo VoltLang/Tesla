@@ -125,6 +125,30 @@ public:
 	fnTeslaI64Rotl: LLVMValueRef;
 	fnTeslaI64Rotr: LLVMValueRef;
 
+	fnTeslaI32Load: LLVMValueRef;
+	fnTeslaI64Load: LLVMValueRef;
+	fnTeslaF32Load: LLVMValueRef;
+	fnTeslaF64Load: LLVMValueRef;
+	fnTeslaI32Load8S: LLVMValueRef;
+	fnTeslaI32Load8U: LLVMValueRef;
+	fnTeslaI32Load16S: LLVMValueRef;
+	fnTeslaI32Load16U: LLVMValueRef;
+	fnTeslaI64Load8S: LLVMValueRef;
+	fnTeslaI64Load8U: LLVMValueRef;
+	fnTeslaI64Load16S: LLVMValueRef;
+	fnTeslaI64Load16U: LLVMValueRef;
+	fnTeslaI64Load32S: LLVMValueRef;
+	fnTeslaI64Load32U: LLVMValueRef;
+	fnTeslaI32Store: LLVMValueRef;
+	fnTeslaI64Store: LLVMValueRef;
+	fnTeslaF32Store: LLVMValueRef;
+	fnTeslaF64Store: LLVMValueRef;
+	fnTeslaI32Store8: LLVMValueRef;
+	fnTeslaI32Store16: LLVMValueRef;
+	fnTeslaI64Store8: LLVMValueRef;
+	fnTeslaI64Store16: LLVMValueRef;
+	fnTeslaI64Store32: LLVMValueRef;
+
 	fnLLVM_ctpop_i32: LLVMValueRef;
 	fnLLVM_ctpop_i64: LLVMValueRef;
 
@@ -211,6 +235,33 @@ public:
 		unaryI64Args[0] = typeI64;
 		unaryI64 := LLVMFunctionType(typeI64, unaryI64Args, false);
 
+		loadArgs: LLVMTypeRef[1];
+		loadArgs[0] = typeI32;
+		loadI32 := LLVMFunctionType(typeI32, loadArgs, false);
+		loadI64 := LLVMFunctionType(typeI64, loadArgs, false);
+		loadF32 := LLVMFunctionType(typeF32, loadArgs, false);
+		loadF64 := LLVMFunctionType(typeF64, loadArgs, false);
+
+		storeI32Args: LLVMTypeRef[2];
+		storeI32Args[0] = typeI32;
+		storeI32Args[1] = typeI32;
+		storeI32 := LLVMFunctionType(typeVoid, storeI32Args, false);
+
+		storeI64Args: LLVMTypeRef[2];
+		storeI64Args[0] = typeI32;
+		storeI64Args[1] = typeI64;
+		storeI64 := LLVMFunctionType(typeVoid, storeI64Args, false);
+
+		storeF32Args: LLVMTypeRef[2];
+		storeF32Args[0] = typeI32;
+		storeF32Args[1] = typeF32;
+		storeF32 := LLVMFunctionType(typeVoid, storeF32Args, false);
+
+		storeF64Args: LLVMTypeRef[2];
+		storeF64Args[0] = typeI32;
+		storeF64Args[1] = typeF64;
+		storeF64 := LLVMFunctionType(typeVoid, storeF64Args, false);
+
 		fnTeslaI32DivU = LLVMAddFunction(this.mod, "__tesla_op_i32_div_u", binI32);
 		fnTeslaI32DivS = LLVMAddFunction(this.mod, "__tesla_op_i32_div_s", binI32);
 		fnTeslaI32RemU = LLVMAddFunction(this.mod, "__tesla_op_i32_rem_u", binI32);
@@ -228,6 +279,30 @@ public:
 		fnTeslaI64Ctz = LLVMAddFunction(this.mod, "__tesla_op_i64_ctz", unaryI64);
 		fnTeslaI64Rotl = LLVMAddFunction(this.mod, "__tesla_op_i64_rotl", binI64);
 		fnTeslaI64Rotr = LLVMAddFunction(this.mod, "__tesla_op_i64_rotr", binI64);
+
+		fnTeslaI32Load = LLVMAddFunction(this.mod, "__tesla_op_i32_load", loadI32);
+		fnTeslaI64Load = LLVMAddFunction(this.mod, "__tesla_op_i64_load", loadI64);
+		fnTeslaF32Load = LLVMAddFunction(this.mod, "__tesla_op_f32_load", loadF32);
+		fnTeslaF64Load = LLVMAddFunction(this.mod, "__tesla_op_f64_load", loadF64);
+		fnTeslaI32Load8S = LLVMAddFunction(this.mod, "__tesla_op_i32_load8_s", loadI32);
+		fnTeslaI32Load8U = LLVMAddFunction(this.mod, "__tesla_op_i32_load8_u", loadI32);
+		fnTeslaI32Load16S = LLVMAddFunction(this.mod, "__tesla_op_i32_load16_s", loadI32);
+		fnTeslaI32Load16U = LLVMAddFunction(this.mod, "__tesla_op_i32_load16_u", loadI32);
+		fnTeslaI64Load8S = LLVMAddFunction(this.mod, "__tesla_op_i64_load8_s", loadI64);
+		fnTeslaI64Load8U = LLVMAddFunction(this.mod, "__tesla_op_i64_load8_u", loadI64);
+		fnTeslaI64Load16S = LLVMAddFunction(this.mod, "__tesla_op_i64_load16_s", loadI64);
+		fnTeslaI64Load16U = LLVMAddFunction(this.mod, "__tesla_op_i64_load16_u", loadI64);
+		fnTeslaI64Load32S = LLVMAddFunction(this.mod, "__tesla_op_i64_load32_s", loadI64);
+		fnTeslaI64Load32U = LLVMAddFunction(this.mod, "__tesla_op_i64_load32_u", loadI64);
+		fnTeslaI32Store = LLVMAddFunction(this.mod, "__tesla_op_i32_store", storeI32);
+		fnTeslaI64Store = LLVMAddFunction(this.mod, "__tesla_op_i64_store", storeI64);
+		fnTeslaF32Store = LLVMAddFunction(this.mod, "__tesla_op_f32_store", storeF32);
+		fnTeslaF64Store = LLVMAddFunction(this.mod, "__tesla_op_f64_store", storeF64);
+		fnTeslaI32Store8 = LLVMAddFunction(this.mod, "__tesla_op_i32_store8", storeI32);
+		fnTeslaI32Store16 = LLVMAddFunction(this.mod, "__tesla_op_i32_store16", storeI32);
+		fnTeslaI64Store8 = LLVMAddFunction(this.mod, "__tesla_op_i64_store8", storeI64);
+		fnTeslaI64Store16 = LLVMAddFunction(this.mod, "__tesla_op_i64_store16", storeI64);
+		fnTeslaI64Store32 = LLVMAddFunction(this.mod, "__tesla_op_i64_store32", storeI64);
 
 		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
 		fnLLVM_ctpop_i64 = LLVMAddFunction(this.mod, "llvm.ctpop.i64", unaryI64);
@@ -841,26 +916,29 @@ public:
 		ensureBlock(op);
 
 		switch (op) with (wasm.Opcode) {
-		case I32Load8U:  buildLoad(wasm.Type.I32,  typeI8, false, offset); break;
-		case I32Load8S:  buildLoad(wasm.Type.I32,  typeI8,  true, offset); break;
-		case I32Load16U: buildLoad(wasm.Type.I32, typeI16, false, offset); break;
-		case I32Load16S: buildLoad(wasm.Type.I32, typeI16,  true, offset); break;
-		case I32Load:    buildLoad(wasm.Type.I32, typeI32, false, offset); break;
-		case I64Load8U:  buildLoad(wasm.Type.I64,  typeI8, false, offset); break;
-		case I64Load8S:  buildLoad(wasm.Type.I64,  typeI8,  true, offset); break;
-		case I64Load16U: buildLoad(wasm.Type.I64, typeI16, false, offset); break;
-		case I64Load16S: buildLoad(wasm.Type.I64, typeI16,  true, offset); break;
-		case I64Load32U: buildLoad(wasm.Type.I64, typeI32, false, offset); break;
-		case I64Load32S: buildLoad(wasm.Type.I64, typeI32,  true, offset); break;
-		case I64Load:    buildLoad(wasm.Type.I64, typeI64, false, offset); break;
-		case F32Load:    buildLoad(wasm.Type.F32, typeF32, false, offset); break;
-		case F64Load:    buildLoad(wasm.Type.F64, typeF64, false, offset); break;
-		case I32Store8:  buildStore(wasm.Type.I32, typeI8, offset); break;
-		case I32Store16: buildStore(wasm.Type.I32, typeI16, offset); break;
-		case I32Store:   buildStore(wasm.Type.I32, typeI32, offset); break;
-		case I64Store:   buildStore(wasm.Type.I64, typeI64, offset); break;
-		case F32Store:   buildStore(wasm.Type.F32, typeF32, offset); break;
-		case F64Store:   buildStore(wasm.Type.F64, typeF64, offset); break;
+		case I32Load:    buildLoad(wasm.Type.I32,  fnTeslaI32Load,    offset); break;
+		case I64Load:    buildLoad(wasm.Type.I64,  fnTeslaI64Load,    offset); break;
+		case F32Load:    buildLoad(wasm.Type.F32,  fnTeslaF32Load,    offset); break;
+		case F64Load:    buildLoad(wasm.Type.F64,  fnTeslaF64Load,    offset); break;
+		case I32Load8S:  buildLoad(wasm.Type.I32,  fnTeslaI32Load8S,  offset); break;
+		case I32Load8U:  buildLoad(wasm.Type.I32,  fnTeslaI32Load8U,  offset); break;
+		case I32Load16S: buildLoad(wasm.Type.I32,  fnTeslaI32Load16S, offset); break;
+		case I32Load16U: buildLoad(wasm.Type.I32,  fnTeslaI32Load16U, offset); break;
+		case I64Load8S:  buildLoad(wasm.Type.I64,  fnTeslaI64Load8S,  offset); break;
+		case I64Load8U:  buildLoad(wasm.Type.I64,  fnTeslaI64Load8U,  offset); break;
+		case I64Load16S: buildLoad(wasm.Type.I64,  fnTeslaI64Load16S, offset); break;
+		case I64Load16U: buildLoad(wasm.Type.I64,  fnTeslaI64Load16U, offset); break;
+		case I64Load32S: buildLoad(wasm.Type.I64,  fnTeslaI64Load32S, offset); break;
+		case I64Load32U: buildLoad(wasm.Type.I64,  fnTeslaI64Load32U, offset); break;
+		case I32Store:   buildStore(wasm.Type.I32, fnTeslaI32Store,   offset); break;
+		case I64Store:   buildStore(wasm.Type.I64, fnTeslaI64Store,   offset); break;
+		case F32Store:   buildStore(wasm.Type.F32, fnTeslaF32Store,   offset); break;
+		case F64Store:   buildStore(wasm.Type.F64, fnTeslaF64Store,   offset); break;
+		case I32Store8:  buildStore(wasm.Type.I32, fnTeslaI32Store8,  offset); break;
+		case I32Store16: buildStore(wasm.Type.I32, fnTeslaI32Store16, offset); break;
+		case I64Store8:  buildStore(wasm.Type.I64, fnTeslaI64Store8,  offset); break;
+		case I64Store16: buildStore(wasm.Type.I64, fnTeslaI64Store16, offset); break;
+		case I64Store32: buildStore(wasm.Type.I64, fnTeslaI64Store32, offset); break;
 		default: unhandledOp(op, "memory");
 		}
 	}
@@ -993,43 +1071,33 @@ public:
 		valueStack.push(to, v);
 	}
 
-	fn buildLoad(t: wasm.Type, srcBaseType: LLVMTypeRef, signed: bool, offset: u32)
+	fn buildLoad(t: wasm.Type, func: LLVMValueRef, offset: u32)
 	{
-		toType := toLLVMFromValueType(t);
-		ptrType := LLVMPointerType(srcBaseType, 0);
-
 		ptr := valueStack.pop(wasm.Type.I32);
 		if (offset != 0) {
 			ptr = LLVMBuildBinOp(builder, LLVMOpcode.Add,
 				LLVMConstInt(typeI32, offset, false), ptr, "");
 		}
-		ptr = LLVMBuildBitCast(builder, ptr, ptrType, "");
 
-		v := LLVMBuildLoad(builder, ptr, "");
-
-		if (signed) {
-			v = LLVMBuildSExtOrBitCast(builder, v, toType, "");
-		} else {
-			v = LLVMBuildZExtOrBitCast(builder, v, toType, "");
-		}
-
+		args: LLVMValueRef[1];
+		args[0] = ptr;
+		v := LLVMBuildCall(builder, func, args);
 		valueStack.push(t, v);
 	}
 
-	fn buildStore(t: wasm.Type, baseType: LLVMTypeRef, offset: u32)
+	fn buildStore(t: wasm.Type, func: LLVMValueRef, offset: u32)
 	{
-		ptrType := LLVMPointerType(baseType, 0);
-
 		v := valueStack.pop(t);
 		ptr := valueStack.pop(wasm.Type.I32);
 		if (offset != 0) {
 			ptr = LLVMBuildBinOp(builder, LLVMOpcode.Add,
 				LLVMConstInt(typeI32, offset, false), ptr, "");
 		}
-		v = LLVMBuildBitCast(builder, v, baseType, "");
-		ptr = LLVMBuildBitCast(builder, ptr, ptrType, "");
 
-		LLVMBuildStore(builder, v, ptr);
+		args: LLVMValueRef[2];
+		args[0] = ptr;
+		args[1] = v;
+		LLVMBuildCall(builder, func, args);
 	}
 
 
