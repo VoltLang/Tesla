@@ -101,7 +101,19 @@ public:
 	fnTeslaI32Ctz: LLVMValueRef;
 	fnTeslaI32Rotl: LLVMValueRef;
 	fnTeslaI32Rotr: LLVMValueRef;
+
+	fnTeslaI64DivU: LLVMValueRef;
+	fnTeslaI64DivS: LLVMValueRef;
+	fnTeslaI64RemU: LLVMValueRef;
+	fnTeslaI64RemS: LLVMValueRef;
+	fnTeslaI64Clz: LLVMValueRef;
+	fnTeslaI64Ctz: LLVMValueRef;
+	fnTeslaI64Rotl: LLVMValueRef;
+	fnTeslaI64Rotr: LLVMValueRef;
+
 	fnLLVM_ctpop_i32: LLVMValueRef;
+	fnLLVM_ctpop_i64: LLVMValueRef;
+
 
 public:
 	this()
@@ -174,6 +186,15 @@ public:
 		unaryI32Args[0] = typeI32;
 		unaryI32 := LLVMFunctionType(typeI32, unaryI32Args, false);
 
+		binI64Args: LLVMTypeRef[2];
+		binI64Args[0] = typeI64;
+		binI64Args[1] = typeI64;
+		binI64 := LLVMFunctionType(typeI64, binI64Args, false);
+
+		unaryI64Args: LLVMTypeRef[1];
+		unaryI64Args[0] = typeI64;
+		unaryI64 := LLVMFunctionType(typeI64, unaryI64Args, false);
+
 		fnTeslaI32DivU = LLVMAddFunction(this.mod, "__tesla_op_i32_div_u", binI32);
 		fnTeslaI32DivS = LLVMAddFunction(this.mod, "__tesla_op_i32_div_s", binI32);
 		fnTeslaI32RemU = LLVMAddFunction(this.mod, "__tesla_op_i32_rem_u", binI32);
@@ -182,7 +203,18 @@ public:
 		fnTeslaI32Ctz = LLVMAddFunction(this.mod, "__tesla_op_i32_ctz", unaryI32);
 		fnTeslaI32Rotl = LLVMAddFunction(this.mod, "__tesla_op_i32_rotl", binI32);
 		fnTeslaI32Rotr = LLVMAddFunction(this.mod, "__tesla_op_i32_rotr", binI32);
+
+		fnTeslaI64DivU = LLVMAddFunction(this.mod, "__tesla_op_i64_div_u", binI64);
+		fnTeslaI64DivS = LLVMAddFunction(this.mod, "__tesla_op_i64_div_s", binI64);
+		fnTeslaI64RemU = LLVMAddFunction(this.mod, "__tesla_op_i64_rem_u", binI64);
+		fnTeslaI64RemS = LLVMAddFunction(this.mod, "__tesla_op_i64_rem_s", binI64);
+		fnTeslaI64Clz = LLVMAddFunction(this.mod, "__tesla_op_i64_clz", unaryI64);
+		fnTeslaI64Ctz = LLVMAddFunction(this.mod, "__tesla_op_i64_ctz", unaryI64);
+		fnTeslaI64Rotl = LLVMAddFunction(this.mod, "__tesla_op_i64_rotl", binI64);
+		fnTeslaI64Rotr = LLVMAddFunction(this.mod, "__tesla_op_i64_rotr", binI64);
+
 		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
+		fnLLVM_ctpop_i64 = LLVMAddFunction(this.mod, "llvm.ctpop.i64", unaryI64);
 	}
 
 	fn toLLVMFromValueType(t: wasm.Type) LLVMTypeRef
@@ -691,6 +723,24 @@ public:
 			buildCmp(wasm.Type.I32, LLVMIntPredicate.EQ);
 			break;
 		// 64-bit integer.
+		case I64Add: buildBinOp(wasm.Type.I64, LLVMOpcode.Add); break;
+		case I64Sub: buildBinOp(wasm.Type.I64, LLVMOpcode.Sub); break;
+		case I64Mul: buildBinOp(wasm.Type.I64, LLVMOpcode.Mul); break;
+		case I64DivU: buildBinCall(wasm.Type.I64, fnTeslaI64DivU); break;
+		case I64DivS: buildBinCall(wasm.Type.I64, fnTeslaI64DivS); break;
+		case I64RemU: buildBinCall(wasm.Type.I64, fnTeslaI64RemU); break;
+		case I64RemS: buildBinCall(wasm.Type.I64, fnTeslaI64RemS); break;
+		case I64And: buildBinOp(wasm.Type.I64, LLVMOpcode.And); break;
+		case I64Or: buildBinOp(wasm.Type.I64, LLVMOpcode.Or); break;
+		case I64Xor: buildBinOp(wasm.Type.I64, LLVMOpcode.Xor); break;
+		case I64Shl: buildBinOp(wasm.Type.I64, LLVMOpcode.Shl); break;
+		case I64ShrU: buildBinOp(wasm.Type.I64, LLVMOpcode.LShr); break;
+		case I64ShrS: buildBinOp(wasm.Type.I64, LLVMOpcode.AShr); break;
+		case I64Rotl: buildBinCall(wasm.Type.I64, fnTeslaI64Rotl); break;
+		case I64Rotr: buildBinCall(wasm.Type.I64, fnTeslaI64Rotr); break;
+		case I64Clz: buildUnaryCall(wasm.Type.I64, fnTeslaI64Clz); break;
+		case I64Ctz: buildUnaryCall(wasm.Type.I64, fnTeslaI64Ctz); break;
+		case I64Popcnt: buildUnaryCall(wasm.Type.I64, fnLLVM_ctpop_i64); break;
 		case I64Eq: buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ); break;
 		case I64Ne: buildCmp(wasm.Type.I64, LLVMIntPredicate.NE); break;
 		case I64LeU: buildCmp(wasm.Type.I64, LLVMIntPredicate.ULE); break;
@@ -701,17 +751,6 @@ public:
 		case I64GeS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGE); break;
 		case I64GtU: buildCmp(wasm.Type.I64, LLVMIntPredicate.UGT); break;
 		case I64GtS: buildCmp(wasm.Type.I64, LLVMIntPredicate.SGT); break;
-		case I64Add: buildBinOp(wasm.Type.I64, LLVMOpcode.Add); break;
-		case I64Sub: buildBinOp(wasm.Type.I64, LLVMOpcode.Sub); break;
-		case I64Mul: buildBinOp(wasm.Type.I64, LLVMOpcode.Mul); break;
-		case I64DivU: buildBinOp(wasm.Type.I64, LLVMOpcode.UDiv); break;
-		case I64DivS: buildBinOp(wasm.Type.I64, LLVMOpcode.SDiv); break;
-		case I64And: buildBinOp(wasm.Type.I64, LLVMOpcode.And); break;
-		case I64Or: buildBinOp(wasm.Type.I64, LLVMOpcode.Or); break;
-		case I64Xor: buildBinOp(wasm.Type.I64, LLVMOpcode.Xor); break;
-		case I64Shl: buildBinOp(wasm.Type.I64, LLVMOpcode.Shl); break;
-		case I64ShrU: buildBinOp(wasm.Type.I64, LLVMOpcode.LShr); break;
-		case I64ShrS: buildBinOp(wasm.Type.I64, LLVMOpcode.AShr); break;
 		case I64Eqz:
 			valueStack.push(wasm.Type.I64, LLVMConstInt(typeI64, 0, false));
 			buildCmp(wasm.Type.I64, LLVMIntPredicate.EQ);
