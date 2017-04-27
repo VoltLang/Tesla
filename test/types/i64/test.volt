@@ -1,78 +1,43 @@
 module test;
 
 import ops;
-import io = watt.io;
+import testfuncs;
 
 
-global statusFlag: i32;
+extern(C):
+fn add(i64, i64) i64;
+fn sub(i64, i64) i64;
+fn mul(i64, i64) i64;
+fn div_u(i64, i64) i64;
+fn div_s(i64, i64) i64;
+fn rem_u(i64, i64) i64;
+fn rem_s(i64, i64) i64;
+fn and(i64, i64) i64;
+fn or(i64, i64) i64;
+fn xor(i64, i64) i64;
+fn shl(i64, i64) i64;
+fn shr_u(i64, i64) i64;
+fn shr_s(i64, i64) i64;
+fn rotl(i64, i64) i64;
+fn rotr(i64, i64) i64;
 
-fn test(name: string, f: fn!C(i64, i64) i64, l: i64, r: i64, expect: i64)
-{
-	//io.output.writefln("%s(%s, %s) = %s", name, l, r, expect);
-	//io.output.flush();
-	ret := f(l, r);
+fn clz(i64) i64;
+fn ctz(i64) i64;
+fn popcnt(i64) i64;
+fn eqz(i64) i32;
 
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s, %s) = %s", name, l, r, expect);
-		io.error.writefln("%s(0x%016x, 0x%016x) = 0x%016x", name, l, r, expect);
-		io.error.writefln("FAIL expect: 0x%016x (%s)", expect, expect);
-		io.error.writefln("        ret: 0x%016x (%s)", ret, ret);
-		io.error.flush();
-		io.error.flush();
-	}
-}
+fn eq(i64, i64) i32;
+fn ne(i64, i64) i32;
+fn lt_s(i64, i64) i32;
+fn lt_u(i64, i64) i32;
+fn le_s(i64, i64) i32;
+fn le_u(i64, i64) i32;
+fn gt_s(i64, i64) i32;
+fn gt_u(i64, i64) i32;
+fn ge_s(i64, i64) i32;
+fn ge_u(i64, i64) i32;
 
-fn test(name: string, f: fn!C(i64, i64) i32, l: i64, r: i64, expect: i32)
-{
-	//io.output.writefln("%s(%s, %s) = %s", name, l, r, expect);
-	//io.output.flush();
-	ret := f(l, r);
-
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s, %s) = %s", name, l, r, expect);
-		io.error.writefln("%s(0x%016x, 0x%016x) = 0x%08x", name, l, r, expect);
-		io.error.writefln("FAIL expect: 0x%08x (%s)", expect, expect);
-		io.error.writefln("        ret: 0x%08x (%s)", ret, ret);
-		io.error.flush();
-		io.error.flush();
-	}
-}
-
-fn test(name: string, f: fn!C(i64) i64, v: i64, expect: i64)
-{
-	//io.output.writefln("%s(%s) = %s", name, v, expect);
-	//io.output.flush();
-	ret := f(v);
-
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s) = %s", name, v, expect);
-		io.error.writefln("%s(0x%016x) = 0x%016x", name, v, expect);
-		io.error.writefln("FAIL expect: 0x%016x (%s)", expect, expect);
-		io.error.writefln("        ret: 0x%016x (%s)", ret, ret);
-		io.error.flush();
-	}
-}
-
-fn test(name: string, f: fn!C(i64) i32, v: i64, expect: i32)
-{
-	//io.output.writefln("%s(%s) = %s", name, v, expect);
-	//io.output.flush();
-	ret := f(v);
-
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s) = %s", name, v, expect);
-		io.error.writefln("%s(0x%016x) = 0x%08x", name, v, expect);
-		io.error.writefln("FAIL expect: 0x%08x (%s)", expect, expect);
-		io.error.writefln("        ret: 0x%08x (%s)", ret, ret);
-		io.error.flush();
-	}
-}
-
-int main()
+extern(Volt) fn main() i32
 {
 	test("add", add, 1, 1, 2);
 	test("add", add, 1, 0, 1);
@@ -269,39 +234,5 @@ int main()
 
 	// TODO more tests
 
-	io.output.flush();
-	return statusFlag;
+	return getResult();
 }
-
-extern(C):
-fn add(i64, i64) i64;
-fn sub(i64, i64) i64;
-fn mul(i64, i64) i64;
-fn div_u(i64, i64) i64;
-fn div_s(i64, i64) i64;
-fn rem_u(i64, i64) i64;
-fn rem_s(i64, i64) i64;
-fn and(i64, i64) i64;
-fn or(i64, i64) i64;
-fn xor(i64, i64) i64;
-fn shl(i64, i64) i64;
-fn shr_u(i64, i64) i64;
-fn shr_s(i64, i64) i64;
-fn rotl(i64, i64) i64;
-fn rotr(i64, i64) i64;
-
-fn clz(i64) i64;
-fn ctz(i64) i64;
-fn popcnt(i64) i64;
-fn eqz(i64) i32;
-
-fn eq(i64, i64) i32;
-fn ne(i64, i64) i32;
-fn lt_s(i64, i64) i32;
-fn lt_u(i64, i64) i32;
-fn le_s(i64, i64) i32;
-fn le_u(i64, i64) i32;
-fn gt_s(i64, i64) i32;
-fn gt_u(i64, i64) i32;
-fn ge_s(i64, i64) i32;
-fn ge_u(i64, i64) i32;

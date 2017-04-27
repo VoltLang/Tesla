@@ -5,7 +5,7 @@
 		"default": [
 			"//T requires:exceptions",
 			"//T run:tesla -o %t.bc %S/test.wasm",
-			"//T run:volta -o %t %S/../../common/ops.volt %s %t.bc",
+			"//T run:volta -o %t --src-I %S/../../common %s %t.bc",
 			"//T run:%t"
 		]
 	},

@@ -1,40 +1,44 @@
 module test;
 
 import ops;
-import io = watt.io;
+import testfuncs;
 
-global statusFlag: i32;
 
-fn test(name: string, f: fn!C(i32, i32) i32, l: i32, r: i32, expect: i32)
-{
-	//io.output.writefln("%s(%s, %s) = %s", name, l, r, expect);
-	//io.output.flush();
-	ret := f(l, r);
+extern(C):
 
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s, %s) = %s", name, l, r, expect);
-		io.error.writefln("FAIL expect: 0x%08x (%s) ret: 0x%08x (%s)", expect, expect, ret, ret);
-		io.error.flush();
-		io.error.flush();
-	}
-}
+fn add(i32, i32) i32;
+fn sub(i32, i32) i32;
+fn mul(i32, i32) i32;
+fn div_u(i32, i32) i32;
+fn div_s(i32, i32) i32;
+fn rem_u(i32, i32) i32;
+fn rem_s(i32, i32) i32;
+fn and(i32, i32) i32;
+fn or(i32, i32) i32;
+fn xor(i32, i32) i32;
+fn shl(i32, i32) i32;
+fn shr_u(i32, i32) i32;
+fn shr_s(i32, i32) i32;
+fn rotl(i32, i32) i32;
+fn rotr(i32, i32) i32;
 
-fn test(name: string, f: fn!C(i32) i32, v: i32, expect: i32)
-{
-	//io.output.writefln("%s(%s) = %s", name, v, expect);
-	//io.output.flush();
-	ret := f(v);
+fn clz(i32) i32;
+fn ctz(i32) i32;
+fn popcnt(i32) i32;
+fn eqz(i32) i32;
 
-	if (expect != ret) {
-		statusFlag |= 1;
-		io.error.writefln("%s(%s) = %s", name, v, expect);
-		io.error.writefln("FAIL expect: 0x%08x (%s) ret: 0x%08x (%s)", expect, expect, ret, ret);
-		io.error.flush();
-	}
-}
+fn eq(i32, i32) i32;
+fn ne(i32, i32) i32;
+fn lt_s(i32, i32) i32;
+fn lt_u(i32, i32) i32;
+fn le_s(i32, i32) i32;
+fn le_u(i32, i32) i32;
+fn gt_s(i32, i32) i32;
+fn gt_u(i32, i32) i32;
+fn ge_s(i32, i32) i32;
+fn ge_u(i32, i32) i32;
 
-int main()
+extern(Volt) fn main() i32
 {
 	test("add", add, 1, 1, 2);
 	test("add", add, 1, 0, 1);
@@ -397,39 +401,5 @@ int main()
 	test("ge_u", ge_u, 0x80000000_i32, 0x7fffffff_i32, 1);
 	test("ge_u", ge_u, 0x7fffffff_i32, 0x80000000_i32, 0);
 
-	io.output.flush();
-	return statusFlag;
+	return getResult();
 }
-
-extern(C):
-fn add(i32, i32) i32;
-fn sub(i32, i32) i32;
-fn mul(i32, i32) i32;
-fn div_u(i32, i32) i32;
-fn div_s(i32, i32) i32;
-fn rem_u(i32, i32) i32;
-fn rem_s(i32, i32) i32;
-fn and(i32, i32) i32;
-fn or(i32, i32) i32;
-fn xor(i32, i32) i32;
-fn shl(i32, i32) i32;
-fn shr_u(i32, i32) i32;
-fn shr_s(i32, i32) i32;
-fn rotl(i32, i32) i32;
-fn rotr(i32, i32) i32;
-
-fn clz(i32) i32;
-fn ctz(i32) i32;
-fn popcnt(i32) i32;
-fn eqz(i32) i32;
-
-fn eq(i32, i32) i32;
-fn ne(i32, i32) i32;
-fn lt_s(i32, i32) i32;
-fn lt_u(i32, i32) i32;
-fn le_s(i32, i32) i32;
-fn le_u(i32, i32) i32;
-fn gt_s(i32, i32) i32;
-fn gt_u(i32, i32) i32;
-fn ge_s(i32, i32) i32;
-fn ge_u(i32, i32) i32;
