@@ -383,6 +383,7 @@ public:
 
 		fnLLVM_ctpop_i32 = LLVMAddFunction(this.mod, "llvm.ctpop.i32", unaryI32);
 		fnLLVM_ctpop_i64 = LLVMAddFunction(this.mod, "llvm.ctpop.i64", unaryI64);
+
 		fnLLVM_fabs_f32 = LLVMAddFunction(this.mod, "llvm.fabs.f32", unaryF32);
 		fnLLVM_ceil_f32 = LLVMAddFunction(this.mod, "llvm.ceil.f32", unaryF32);
 		fnLLVM_floor_f32 = LLVMAddFunction(this.mod, "llvm.floor.f32", unaryF32);
@@ -391,7 +392,7 @@ public:
 		fnLLVM_sqrt_f32 = LLVMAddFunction(this.mod, "llvm.sqrt.f32", unaryF32);
 		fnLLVM_minnum_f32 = LLVMAddFunction(this.mod, "llvm.minnum.f32", binF32);
 		fnLLVM_maxnum_f32 = LLVMAddFunction(this.mod, "llvm.maxnum.f32", binF32);
-		fnLLVM_copysign_f32 = LLVMAddFunction(this.mod, "llvm.copysign.f32", unaryF32);
+		fnLLVM_copysign_f32 = LLVMAddFunction(this.mod, "llvm.copysign.f32", binF32);
 		fnLLVM_fabs_f64 = LLVMAddFunction(this.mod, "llvm.fabs.f64", unaryF64);
 		fnLLVM_ceil_f64 = LLVMAddFunction(this.mod, "llvm.ceil.f64", unaryF64);
 		fnLLVM_floor_f64 = LLVMAddFunction(this.mod, "llvm.floor.f64", unaryF64);
@@ -400,7 +401,7 @@ public:
 		fnLLVM_sqrt_f64 = LLVMAddFunction(this.mod, "llvm.sqrt.f64", unaryF64);
 		fnLLVM_minnum_f64 = LLVMAddFunction(this.mod, "llvm.minnum.f64", binF64);
 		fnLLVM_maxnum_f64 = LLVMAddFunction(this.mod, "llvm.maxnum.f64", binF64);
-		fnLLVM_copysign_f64 = LLVMAddFunction(this.mod, "llvm.copysign.f64", unaryF64);
+		fnLLVM_copysign_f64 = LLVMAddFunction(this.mod, "llvm.copysign.f64", binF64);
 
 		globalTeslaStack = LLVMAddGlobal(this.mod, typeI32, "__tesla_stack_ptr");
 		LLVMSetInitializer(globalTeslaStack, LLVMConstNull(typeI32));
@@ -1028,7 +1029,7 @@ public:
 		case F32Div: buildBinCall(wasm.Type.F32, fnTeslaF32Div); valueStack.checkTop(wasm.Type.F32); break;
 		case F32Min: buildBinCall(wasm.Type.F32, fnLLVM_minnum_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F32Max: buildBinCall(wasm.Type.F32, fnLLVM_maxnum_f32); valueStack.checkTop(wasm.Type.F32); break;
-		case F32Copysign: buildUnaryCall(wasm.Type.F32, fnLLVM_copysign_f32); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Copysign: buildBinCall(wasm.Type.F32, fnLLVM_copysign_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F64Abs: buildUnaryCall(wasm.Type.F64, fnLLVM_fabs_f64); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Neg: buildUnaryCall(wasm.Type.F64, fnTeslaF64Neg); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Ceil: buildUnaryCall(wasm.Type.F64, fnLLVM_ceil_f64); valueStack.checkTop(wasm.Type.F64); break;
@@ -1042,7 +1043,7 @@ public:
 		case F64Div: buildBinCall(wasm.Type.F64, fnTeslaF64Div); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Min: buildBinCall(wasm.Type.F64, fnLLVM_minnum_f64); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Max: buildBinCall(wasm.Type.F64, fnLLVM_maxnum_f64); valueStack.checkTop(wasm.Type.F64); break;
-		case F64Copysign: buildUnaryCall(wasm.Type.F64, fnLLVM_copysign_f64); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Copysign: buildBinCall(wasm.Type.F64, fnLLVM_copysign_f64); valueStack.checkTop(wasm.Type.F64); break;
 
 		// Conversions
 		case I32WrapI64: buildBitCast(wasm.Type.I64, wasm.Type.I32, typeI32); valueStack.checkTop(wasm.Type.I32); break;
