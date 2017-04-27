@@ -76,7 +76,6 @@ fn test(name: string, f: fn!C(i64, i64) i64, l: i64, r: i64, expect: i64)
 		io.error.writefln("FAIL expect: 0x%016x (%s)", expect, expect);
 		io.error.writefln("        ret: 0x%016x (%s)", ret, ret);
 		io.error.flush();
-		io.error.flush();
 	}
 }
 
@@ -92,7 +91,6 @@ fn test(name: string, f: fn!C(i64, i64) i32, l: i64, r: i64, expect: i32)
 		io.error.writefln("%s(0x%016x, 0x%016x) = 0x%08x", name, l, r, expect);
 		io.error.writefln("FAIL expect: 0x%08x (%s)", expect, expect);
 		io.error.writefln("        ret: 0x%08x (%s)", ret, ret);
-		io.error.flush();
 		io.error.flush();
 	}
 }
