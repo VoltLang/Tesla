@@ -131,6 +131,30 @@ fn __tesla_op_i64_ctz(v: i64) i64
 
 /*
  *
+ * f32 ops.
+ *
+ */
+
+fn __tesla_op_f32_div(l: f32, r: f32) f32
+{
+	return l / r;
+}
+
+
+/*
+ *
+ * f32 ops.
+ *
+ */
+
+fn __tesla_op_f64_div(l: f64, r: f64) f64
+{
+	return l / r;
+}
+
+
+/*
+ *
  * Shared llvm functions
  *
  */
