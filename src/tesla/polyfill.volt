@@ -64,6 +64,9 @@ public:
 	mod: LLVMModuleRef;
 	builder: LLVMBuilderRef;
 
+	funcPrefix: string;
+	funcAnonFmtStr: string;
+
 	codeSection: const(u8)[];
 
 	lastSection: wasm.Section;
@@ -193,6 +196,9 @@ public:
 public:
 	this()
 	{
+		funcPrefix = "_t_";
+		funcAnonFmtStr = "_t%s";
+
 		this.valueStack.poly = this;
 		this.ctx = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext("polyfill", this.ctx);
@@ -543,7 +549,7 @@ public:
 		ensureValidFuncTypeIndex(index, "function entry");
 
 		ft := funcTypes[index];
-		name := format("__n%s", num); // May be overridden by export.
+		name := format(funcAnonFmtStr, num); // May be overridden by export.
 		funcs[realNum] = new Func(ft, index);
 	}
 
@@ -638,7 +644,7 @@ public:
 		case Function:
 			ensureNotImportFuncIndex(index, "export entry");
 			ensureValidFuncIndex(index, "export entry");
-			funcs[index].name = name;
+			funcs[index].name = funcPrefix ~ name;
 			break;
 		}
 	}
