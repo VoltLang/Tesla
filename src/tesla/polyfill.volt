@@ -128,9 +128,7 @@ public:
 	fnTeslaI64Rotl: LLVMValueRef;
 	fnTeslaI64Rotr: LLVMValueRef;
 
-	fnTeslaF32Neg: LLVMValueRef;
 	fnTeslaF32Div: LLVMValueRef;
-	fnTeslaF64Neg: LLVMValueRef;
 	fnTeslaF64Div: LLVMValueRef;
 
 	fnTeslaI32Load: LLVMValueRef;
@@ -339,9 +337,7 @@ public:
 		fnTeslaI64Rotl = LLVMAddFunction(this.mod, "__tesla_op_i64_rotl", binI64);
 		fnTeslaI64Rotr = LLVMAddFunction(this.mod, "__tesla_op_i64_rotr", binI64);
 
-		fnTeslaF32Neg = LLVMAddFunction(this.mod, "__tesla_op_f32_neg", unaryF32);
 		fnTeslaF32Div = LLVMAddFunction(this.mod, "__tesla_op_f32_div", binF32);
-		fnTeslaF64Neg = LLVMAddFunction(this.mod, "__tesla_op_f64_neg", unaryF64);
 		fnTeslaF64Div = LLVMAddFunction(this.mod, "__tesla_op_f64_div", binF64);
 
 		fnTeslaI32Load = LLVMAddFunction(this.mod, "__tesla_op_i32_load", loadI32);
@@ -1023,7 +1019,12 @@ public:
 
 		// FLoating ops
 		case F32Abs: buildUnaryCall(wasm.Type.F32, fnLLVM_fabs_f32); valueStack.checkTop(wasm.Type.F32); break;
-		case F32Neg: buildUnaryCall(wasm.Type.F32, fnTeslaF32Neg); valueStack.checkTop(wasm.Type.F32); break;
+		case F32Neg:
+			zero := LLVMConstReal(typeF32, 0.0);
+			v := valueStack.pop(wasm.Type.F32);
+			v = LLVMBuildBinOp(builder, LLVMOpcode.FSub, zero, v, "");
+			valueStack.push(wasm.Type.F32, v);
+			break;
 		case F32Ceil: buildUnaryCall(wasm.Type.F32, fnLLVM_ceil_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F32Floor: buildUnaryCall(wasm.Type.F32, fnLLVM_floor_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F32Trunc: buildUnaryCall(wasm.Type.F32, fnLLVM_trunc_f32); valueStack.checkTop(wasm.Type.F32); break;
@@ -1037,7 +1038,12 @@ public:
 		case F32Max: buildBinCall(wasm.Type.F32, fnLLVM_maxnum_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F32Copysign: buildBinCall(wasm.Type.F32, fnLLVM_copysign_f32); valueStack.checkTop(wasm.Type.F32); break;
 		case F64Abs: buildUnaryCall(wasm.Type.F64, fnLLVM_fabs_f64); valueStack.checkTop(wasm.Type.F64); break;
-		case F64Neg: buildUnaryCall(wasm.Type.F64, fnTeslaF64Neg); valueStack.checkTop(wasm.Type.F64); break;
+		case F64Neg:
+			zero := LLVMConstReal(typeF64, 0.0);
+			v := valueStack.pop(wasm.Type.F64);
+			v = LLVMBuildBinOp(builder, LLVMOpcode.FSub, zero, v, "");
+			valueStack.push(wasm.Type.F64, v);
+			break;
 		case F64Ceil: buildUnaryCall(wasm.Type.F64, fnLLVM_ceil_f64); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Floor: buildUnaryCall(wasm.Type.F64, fnLLVM_floor_f64); valueStack.checkTop(wasm.Type.F64); break;
 		case F64Trunc: buildUnaryCall(wasm.Type.F64, fnLLVM_trunc_f64); valueStack.checkTop(wasm.Type.F64); break;
