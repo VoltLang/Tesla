@@ -6,37 +6,37 @@ import testfuncs;
 
 extern(C):
 
-fn add(i32, i32) i32;
-fn sub(i32, i32) i32;
-fn mul(i32, i32) i32;
-fn div_u(i32, i32) i32;
-fn div_s(i32, i32) i32;
-fn rem_u(i32, i32) i32;
-fn rem_s(i32, i32) i32;
-fn and(i32, i32) i32;
-fn or(i32, i32) i32;
-fn xor(i32, i32) i32;
-fn shl(i32, i32) i32;
-fn shr_u(i32, i32) i32;
-fn shr_s(i32, i32) i32;
-fn rotl(i32, i32) i32;
-fn rotr(i32, i32) i32;
+@mangledName("_t_add") fn add(i32, i32) i32;
+@mangledName("_t_sub") fn sub(i32, i32) i32;
+@mangledName("_t_mul") fn mul(i32, i32) i32;
+@mangledName("_t_div_u") fn div_u(i32, i32) i32;
+@mangledName("_t_div_s") fn div_s(i32, i32) i32;
+@mangledName("_t_rem_u") fn rem_u(i32, i32) i32;
+@mangledName("_t_rem_s") fn rem_s(i32, i32) i32;
+@mangledName("_t_and") fn and(i32, i32) i32;
+@mangledName("_t_or") fn or(i32, i32) i32;
+@mangledName("_t_xor") fn xor(i32, i32) i32;
+@mangledName("_t_shl") fn shl(i32, i32) i32;
+@mangledName("_t_shr_u") fn shr_u(i32, i32) i32;
+@mangledName("_t_shr_s") fn shr_s(i32, i32) i32;
+@mangledName("_t_rotl") fn rotl(i32, i32) i32;
+@mangledName("_t_rotr") fn rotr(i32, i32) i32;
 
-fn clz(i32) i32;
-fn ctz(i32) i32;
-fn popcnt(i32) i32;
-fn eqz(i32) i32;
+@mangledName("_t_clz") fn clz(i32) i32;
+@mangledName("_t_ctz") fn ctz(i32) i32;
+@mangledName("_t_popcnt") fn popcnt(i32) i32;
+@mangledName("_t_eqz") fn eqz(i32) i32;
 
-fn eq(i32, i32) i32;
-fn ne(i32, i32) i32;
-fn lt_s(i32, i32) i32;
-fn lt_u(i32, i32) i32;
-fn le_s(i32, i32) i32;
-fn le_u(i32, i32) i32;
-fn gt_s(i32, i32) i32;
-fn gt_u(i32, i32) i32;
-fn ge_s(i32, i32) i32;
-fn ge_u(i32, i32) i32;
+@mangledName("_t_eq") fn eq(i32, i32) i32;
+@mangledName("_t_ne") fn ne(i32, i32) i32;
+@mangledName("_t_lt_s") fn lt_s(i32, i32) i32;
+@mangledName("_t_lt_u") fn lt_u(i32, i32) i32;
+@mangledName("_t_le_s") fn le_s(i32, i32) i32;
+@mangledName("_t_le_u") fn le_u(i32, i32) i32;
+@mangledName("_t_gt_s") fn gt_s(i32, i32) i32;
+@mangledName("_t_gt_u") fn gt_u(i32, i32) i32;
+@mangledName("_t_ge_s") fn ge_s(i32, i32) i32;
+@mangledName("_t_ge_u") fn ge_u(i32, i32) i32;
 
 extern(Volt) fn main() i32
 {
