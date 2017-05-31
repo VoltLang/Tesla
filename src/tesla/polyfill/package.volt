@@ -929,13 +929,13 @@ public:
 			}
 
 			ensureValidGlobalIndex(index, "get_global");
+			g := globals[index];
 			if (!g.isPointer) {
 				str := format("global '%s' is not a valid readable global", index);
 				onError(str);
 				break;
 			}
 
-			g := globals[index];
 			v := LLVMBuildLoad(builder, g.llvmValue, "");
 			valueStack.push(g.type, v);
 			break;
@@ -947,13 +947,13 @@ public:
 			}
 
 			ensureValidGlobalIndex(index, "get_global");
+			g := globals[index];
 			if (!g.isPointer) {
 				str := format("global '%s' is not a valid readable global", index);
 				onError(str);
 				break;
 			}
 
-			g := globals[index];
 			v := valueStack.pop(g.type);
 			LLVMBuildStore(builder, v, g.llvmValue);
 			break;
