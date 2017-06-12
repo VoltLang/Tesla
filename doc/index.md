@@ -11,15 +11,16 @@ mostly assumes that the wasm module is well formed.
 ## Status
 
 Can parse and output most of the wasm module, some opcodes requires more
-special built functions (to handle traps). Can also read modules that
-are following the [dynamic linking][DynLink] standard.
+special built functions (to handle traps). Can also read modules that are
+following the [linking][Link] standard.
 
 ## Further reading
 
  *  [C ABI][CABI]
+ *  [Linking][Link]
  *  [Dynamic Linking][DynLink]
 
 
-
-[DynLink]: https://github.com/WebAssembly/tool-conventions/blob/master/DynamicLinking.md
 [CABI]: https://github.com/WebAssembly/tool-conventions/blob/master/BasicCABI.md
+[Link]: https://github.com/WebAssembly/tool-conventions/blob/master/Linking.md
+[DynLink]: https://github.com/WebAssembly/tool-conventions/blob/master/DynamicLinking.md
