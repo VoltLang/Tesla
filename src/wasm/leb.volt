@@ -1,6 +1,6 @@
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/tesla/license.volt (BOOST ver. 1.0).
-module util.leb;
+module wasm.leb;
 
 import wasm.structs;
 
