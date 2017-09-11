@@ -1,3 +1,3 @@
 library('volt-build')
 
-voltBuild('tesla')
+voltBuildExe('tesla')
