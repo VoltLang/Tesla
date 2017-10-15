@@ -229,14 +229,18 @@ fn readImportEntry(r: Reader, num: u32, ref data: const(u8)[])
 		if (data.readV(out type) || data.readV(out mut)) {
 			return r.onReadError("failed to read import entry");
 		}
-		r.onImportGlobal(num, mod, field, type, cast(bool)mut);
+		imod := new string(mod);
+		ifield := new string(field);
+		r.onImportGlobal(num, imod, ifield, type, cast(bool)mut);
 		break;
 	case Function:
 		index: u32;
 		if (data.readV(out index)) {
 			return r.onReadError("failed to read import entry");
 		}
-		r.onImportFunc(num, mod, field, index);
+		imod := new string(mod);
+		ifield := new string(field);
+		r.onImportFunc(num, imod, ifield, index);
 		break;
 	default:
 		r.onReadError("unhandled import entry");
