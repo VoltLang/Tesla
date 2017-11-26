@@ -1,0 +1,19 @@
+#
+# The root Tesla project
+#
+name = "tesla"
+#
+# We need the lib and dsupport to build
+#
+dependencies = ["watt"]
+#
+# Use llvm-config on osx and linux
+#
+[platform.'osx || linux']
+commands = ["llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen engine"]
+libraries = ["stdc++"]
+#
+# On Windows the user will need to provide LLVM.lib
+#
+[platform.msvc]
+libraries = ["LLVM.lib"]
