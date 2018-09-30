@@ -1234,7 +1234,7 @@ public:
 	{
 		checkTypeAndPop(t, loc);
 		v := mTs[mNum];
-		mTs[mNum] = T.init;
+		mTs[mNum] = T.default;
 		return v;
 	}
 
@@ -1242,7 +1242,7 @@ public:
 	{
 		checkAndPop();
 		ret := mTs[mNum];
-		mTs[mNum] = T.init;
+		mTs[mNum] = T.default;
 		return ret;
 	}
 
