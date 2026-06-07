@@ -1,10 +1,15 @@
-// See copyright notice and license in src/lib/llvm/core.volt.
+// SPDX-FileCopyrightText: 2007-2026, LLVM Developers.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 module lib.llvm.c.BitWriter;
 
-import lib.llvm.c.Core;
+public import lib.llvm.c.Types;
 
 
 extern(C):
 
-fn LLVMWriteBitcodeToFile(LLVMModuleRef, const(char)*) int;
-fn LLVMWriteBitcodeToFD(LLVMModuleRef, int, int, int) int;
+//#--- Auto generated below ---#
+fn LLVMWriteBitcodeToFD(M: LLVMModuleRef, FD: i32, ShouldClose: i32, Unbuffered: i32) i32;
+fn LLVMWriteBitcodeToFile(M: LLVMModuleRef, Path: const(char)*) i32;
+fn LLVMWriteBitcodeToFileHandle(M: LLVMModuleRef, Handle: i32) i32;
+fn LLVMWriteBitcodeToMemoryBuffer(M: LLVMModuleRef) LLVMMemoryBufferRef;
