@@ -72,11 +72,16 @@ fn LLVMBuildAlloca(b: LLVMBuilderRef, type: LLVMTypeRef, name: string) LLVMValue
 	return lib.llvm.c.Core.LLVMBuildAlloca(b, type, ptr);
 }
 
-fn LLVMBuildCall(b: LLVMBuilderRef, func: LLVMValueRef,
-                 args: LLVMValueRef[]) LLVMValueRef
+fn LLVMBuildCall2(b: LLVMBuilderRef, type: LLVMTypeRef, func: LLVMValueRef,
+                  args: LLVMValueRef[]) LLVMValueRef
 {
-	return lib.llvm.c.Core.LLVMBuildCall(
-		b, func, args.ptr, cast(uint)args.length, "");
+	return lib.llvm.c.Core.LLVMBuildCall2(
+		b, type, func, args.ptr, cast(uint)args.length, "");
+}
+
+fn LLVMBuildLoad2(b: LLVMBuilderRef, type: LLVMTypeRef, ptr: LLVMValueRef) LLVMValueRef
+{
+	return lib.llvm.c.Core.LLVMBuildLoad2(b, type, ptr, "");
 }
 
 /*

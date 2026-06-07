@@ -667,7 +667,7 @@ public:
 			}
 		}
 
-		v := LLVMBuildCall(builder, f.llvmFunc, args);
+		v := LLVMBuildCall2(builder, ft.llvmType, f.llvmFunc, args);
 		if (ft.hasRet) {
 			valueStack.push(ft.retType, v);
 		}
@@ -909,7 +909,7 @@ public:
 
 		switch (op) with (wasm.Opcode) {
 		case GetLocal:
-			v := LLVMBuildLoad(builder, ptr, "");
+			v := LLVMBuildLoad2(builder, toLLVMFromValueType(type), ptr);
 			valueStack.push(type, v);
 			break;
 		case SetLocal:
@@ -923,7 +923,7 @@ public:
 			break;
 		case GetGlobal:
 			if (isLinkable && index == 0) {
-				v := LLVMBuildLoad(builder, globalTeslaStack, "");
+				v := LLVMBuildLoad2(builder, typeI32, globalTeslaStack);
 				valueStack.push(wasm.Type.I32, v);
 				break;
 			}
@@ -936,7 +936,7 @@ public:
 				break;
 			}
 
-			v := LLVMBuildLoad(builder, g.llvmValue, "");
+			v := LLVMBuildLoad2(builder, toLLVMFromValueType(g.type), g.llvmValue);
 			valueStack.push(g.type, v);
 			break;
 		case SetGlobal:
@@ -1003,12 +1003,81 @@ public:
 		valueStack.push(t, v);
 	}
 
+	fn binFuncType(t: wasm.Type) LLVMTypeRef
+	{
+		switch (t) with (wasm.Type) {
+		case I32: return fns.typeBinI32;
+		case I64: return fns.typeBinI64;
+		case F32: return fns.typeBinF32;
+		case F64: return fns.typeBinF64;
+		default: onError("invalid value_type");
+		}
+		return null;
+	}
+
+	fn unaryFuncType(t: wasm.Type) LLVMTypeRef
+	{
+		switch (t) with (wasm.Type) {
+		case I32: return fns.typeUnaryI32;
+		case I64: return fns.typeUnaryI64;
+		case F32: return fns.typeUnaryF32;
+		case F64: return fns.typeUnaryF64;
+		default: onError("invalid value_type");
+		}
+		return null;
+	}
+
+	fn loadFuncType(t: wasm.Type) LLVMTypeRef
+	{
+		switch (t) with (wasm.Type) {
+		case I32: return fns.typeLoadI32;
+		case I64: return fns.typeLoadI64;
+		case F32: return fns.typeLoadF32;
+		case F64: return fns.typeLoadF64;
+		default: onError("invalid value_type");
+		}
+		return null;
+	}
+
+	fn storeFuncType(t: wasm.Type) LLVMTypeRef
+	{
+		switch (t) with (wasm.Type) {
+		case I32: return fns.typeStoreI32;
+		case I64: return fns.typeStoreI64;
+		case F32: return fns.typeStoreF32;
+		case F64: return fns.typeStoreF64;
+		default: onError("invalid value_type");
+		}
+		return null;
+	}
+
+	fn convFuncType(from: wasm.Type, to: wasm.Type) LLVMTypeRef
+	{
+		if (from == wasm.Type.F32 && to == wasm.Type.I32) {
+			return fns.typeI32TruncSF32;
+		}
+		if (from == wasm.Type.F32 && to == wasm.Type.I64) {
+			return fns.typeI64TruncSF32;
+		}
+		if (from == wasm.Type.F64 && to == wasm.Type.I32) {
+			return fns.typeI32TruncSF64;
+		}
+		if (from == wasm.Type.F64 && to == wasm.Type.I64) {
+			return fns.typeI64TruncSF64;
+		}
+		if (from == wasm.Type.F64 && to == wasm.Type.F32) {
+			return fns.typeF32DemoteF64;
+		}
+		onError("invalid conversion");
+		return null;
+	}
+
 	fn buildBinCall(t: wasm.Type, f: LLVMValueRef)
 	{
 		args: LLVMValueRef[2];
 		args[1] = valueStack.pop(t);
 		args[0] = valueStack.pop(t);
-		v := LLVMBuildCall(builder, f, args);
+		v := LLVMBuildCall2(builder, binFuncType(t), f, args);
 		valueStack.push(t, v);
 	}
 
@@ -1016,7 +1085,7 @@ public:
 	{
 		args: LLVMValueRef[1];
 		args[0] = valueStack.pop(t);
-		v := LLVMBuildCall(builder, f, args);
+		v := LLVMBuildCall2(builder, unaryFuncType(t), f, args);
 		valueStack.push(t, v);
 	}
 
@@ -1038,7 +1107,7 @@ public:
 	{
 		args: LLVMValueRef[1];
 		args[0] = valueStack.pop(from);
-		v := LLVMBuildCall(builder, func, args);
+		v := LLVMBuildCall2(builder, convFuncType(from, to), func, args);
 		valueStack.push(to, v);
 	}
 
@@ -1052,7 +1121,7 @@ public:
 
 		args: LLVMValueRef[1];
 		args[0] = ptr;
-		v := LLVMBuildCall(builder, func, args);
+		v := LLVMBuildCall2(builder, loadFuncType(t), func, args);
 		valueStack.push(t, v);
 	}
 
@@ -1068,7 +1137,7 @@ public:
 		args: LLVMValueRef[2];
 		args[0] = ptr;
 		args[1] = v;
-		LLVMBuildCall(builder, func, args);
+		LLVMBuildCall2(builder, storeFuncType(t), func, args);
 	}
 
 
